@@ -65,7 +65,7 @@ const ReservationEntry = ({ onSubmit }) => {
         email: '',
         notes: '',
         source: 'phone',
-        status: 'confirmed'
+        status: 'pending'
       });
       setShowConfirmation(false);
       onSubmit(result);
@@ -135,9 +135,6 @@ const ReservationEntry = ({ onSubmit }) => {
       {showConfirmation && <ConfirmationDialog />}
       
       <h2 className="text-2xl font-bold mb-6">New Reservation</h2>
-      <p className="text-sm text-gray-500 mb-6">
-        Fields marked with <span className="text-red-500">*</span> are required
-      </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
