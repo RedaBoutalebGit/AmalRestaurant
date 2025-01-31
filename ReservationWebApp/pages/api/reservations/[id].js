@@ -40,7 +40,7 @@ export default async function handler(req, res) {
       // Get all data to find the row
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: process.env.SHEET_ID,
-        range: 'Reservations!A:J',
+        range: 'Reservations!A:K', // Updated to include table column
       });
 
       const rows = response.data.values || [];
@@ -83,15 +83,15 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: 'Reservation deleted successfully' });
     }
 
-    // Handle PATCH request (for updating status)
+    // Handle PATCH request (for updating status or table)
     if (req.method === 'PATCH') {
-      const { status } = req.body;
-      console.log('Processing PATCH request for ID:', id, 'New status:', status);
+      const { status, table } = req.body;
+      console.log('Processing PATCH request for ID:', id, 'Status:', status, 'Table:', table);
 
       // Get current data to find the row
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: process.env.SHEET_ID,
-        range: 'Reservations!A:J',
+        range: 'Reservations!A:K', // Updated to include table column
       });
 
       const rows = response.data.values || [];
@@ -104,18 +104,33 @@ export default async function handler(req, res) {
 
       console.log('Found reservation at row:', rowIndex + 1);
 
-      // Update the status (Column I)
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: process.env.SHEET_ID,
-        range: `Reservations!I${rowIndex + 1}`,
-        valueInputOption: 'RAW',
-        requestBody: {
-          values: [[status]]
-        }
-      });
+      // Update based on what was provided
+      if (status !== undefined) {
+        // Update status (Column I)
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: process.env.SHEET_ID,
+          range: `Reservations!I${rowIndex + 1}`,
+          valueInputOption: 'RAW',
+          requestBody: {
+            values: [[status]]
+          }
+        });
+      }
 
-      console.log('Successfully updated reservation status');
-      return res.status(200).json({ message: 'Status updated successfully' });
+      if (table !== undefined) {
+        // Update table assignment (Column K)
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: process.env.SHEET_ID,
+          range: `Reservations!K${rowIndex + 1}`,
+          valueInputOption: 'RAW',
+          requestBody: {
+            values: [[table]]
+          }
+        });
+      }
+
+      console.log('Successfully updated reservation');
+      return res.status(200).json({ message: 'Reservation updated successfully' });
     }
 
     // Handle unsupported methods

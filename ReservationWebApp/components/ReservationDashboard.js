@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, Users, Phone, Mail, RefreshCw, Check, X, Clock as ClockIcon, Trash2, Search } from 'lucide-react';
+import { Calendar, Clock, Users, Phone, Mail, RefreshCw, Check, X, Clock as ClockIcon, Trash2, Search, Table } from 'lucide-react';
 import ReservationAnalytics from './ReservationAnalytics';
 
 const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
@@ -12,6 +12,8 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [deletingId, setDeletingId] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState(null);
+  const [showTableDialog, setShowTableDialog] = useState(false);
+  const [selectedTable, setSelectedTable] = useState('');
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -116,9 +118,78 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     </div>
   );
 
+  // Function to handle table assignment
+  const handleTableAssign = async (reservationId, tableNumber) => {
+    try {
+      const response = await fetch(`/api/reservations/${reservationId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ table: tableNumber }),
+      });
+
+      if (!response.ok) throw new Error('Failed to assign table');
+      await onStatusUpdate();
+      setShowTableDialog(false);
+      setSelectedTable('');
+    } catch (error) {
+      console.error('Error assigning table:', error);
+      alert('Failed to assign table');
+    }
+  };
+
+  // Table Assignment Dialog Component
+  const TableAssignDialog = ({ reservation }) => (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold text-blue-600">Assign Table</h3>
+          <button 
+            onClick={() => setShowTableDialog(false)}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="mb-6">
+          <p className="text-gray-700">Assign a table for {reservation.name}'s party of {reservation.guests}</p>
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700">Table Number</label>
+            <input
+              type="number"
+              min="1"
+              value={selectedTable}
+              onChange={(e) => setSelectedTable(e.target.value)}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter table number"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end space-x-4">
+          <button
+            onClick={() => setShowTableDialog(false)}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => handleTableAssign(reservation.id, selectedTable)}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center"
+          >
+            <Table className="w-4 h-4 mr-2" />
+            Assign Table
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
       {showDeleteConfirm && <DeleteConfirmDialog reservation={selectedReservation} />}
+      {showTableDialog && <TableAssignDialog reservation={selectedReservation} />}
 
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
@@ -218,7 +289,11 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                   )}
                 </div>
               </div>
-
+              {reservation.notes && (
+                    <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                      Notes: <strong>{reservation.notes}</strong>
+                    </div>
+                  )}
               <div className="flex items-center space-x-4">
                 <span className={`px-3 py-1 rounded-full text-sm ${
                   reservation.status === 'confirmed' ? 'bg-green-100 text-green-800' :
@@ -230,6 +305,22 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                 </span>
 
                 <div className="flex space-x-2">
+                <button
+                    onClick={() => {
+                      setSelectedReservation(reservation);
+                      setSelectedTable(reservation.table || '');
+                      setShowTableDialog(true);
+                    }}
+                    className="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100"
+                    title="Assign Table"
+                  >
+                    <Table className="w-4 h-4" />
+                  </button>
+                  {reservation.table && (
+                    <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm">
+                      Table {reservation.table}
+                    </span>
+                  )}
                   {reservation.status !== 'confirmed' && (
                     <button
                       onClick={() => handleStatusUpdate(reservation.id, 'confirmed')}

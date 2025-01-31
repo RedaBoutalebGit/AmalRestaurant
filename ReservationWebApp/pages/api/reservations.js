@@ -69,11 +69,11 @@ export default async function handler(req, res) {
       try {
         const response = await sheets.spreadsheets.values.append({
           spreadsheetId: process.env.SHEET_ID,
-          range: 'Reservations!A:J',
+          range: 'Reservations!A:K', // Updated to include table column
           valueInputOption: 'USER_ENTERED',
           requestBody: {
             values: [[
-              Date.now().toString(),
+              Date.now().toString(), // ID
               date,
               time,
               name,
@@ -82,7 +82,8 @@ export default async function handler(req, res) {
               email || '',
               source || 'online',
               status || 'pending',
-              notes || ''
+              notes || '',
+              '' // Empty table assignment initially
             ]]
           }
         });
@@ -97,44 +98,44 @@ export default async function handler(req, res) {
         });
       }
     } else if (req.method === 'GET') {
-      
-  try {
-    console.log('Fetching reservations from sheet');
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: process.env.SHEET_ID,
-      range: 'Reservations!A2:J',
-    });
+      try {
+        console.log('Fetching reservations from sheet');
+        const response = await sheets.spreadsheets.values.get({
+          spreadsheetId: process.env.SHEET_ID,
+          range: 'Reservations!A2:K', // Updated to include table column
+        });
 
-    console.log('Sheet response received');
-    const rows = response.data.values || [];
-    const reservations = rows.map((row, index) => ({
-      id: row[0] || `row-${index + 2}`, // Use timestamp or fallback to row number
-      date: row[1],
-      time: row[2],
-      name: row[3],
-      guests: parseInt(row[4]) || 0,
-      phone: row[5],
-      email: row[6],
-      source: row[7],
-      status: row[8],
-      notes: row[9]
-    }));
+        console.log('Sheet response received');
+        const rows = response.data.values || [];
+        const reservations = rows.map((row, index) => ({
+          id: row[0] || `row-${index + 2}`,
+          date: row[1],
+          time: row[2],
+          name: row[3],
+          guests: parseInt(row[4]) || 0,
+          phone: row[5],
+          email: row[6],
+          source: row[7],
+          status: row[8],
+          notes: row[9],
+          table: row[10] // Add table number
+        }));
 
-    console.log(`Found ${reservations.length} reservations`);
-    res.status(200).json(reservations);
-  } catch (error) {
-    console.error('Error fetching reservations:', error);
-    if (error.message === 'No authentication tokens found') {
-      return res.status(401).json({
-        error: 'Authentication required',
-        loginUrl: '/api/auth/google'
-      });
-    }
-    res.status(500).json({ 
-      error: 'Failed to fetch reservations',
-      details: error.message
-    });
-  }
+        console.log(`Found ${reservations.length} reservations`);
+        res.status(200).json(reservations);
+      } catch (error) {
+        console.error('Error fetching reservations:', error);
+        if (error.message === 'No authentication tokens found') {
+          return res.status(401).json({
+            error: 'Authentication required',
+            loginUrl: '/api/auth/google'
+          });
+        }
+        res.status(500).json({ 
+          error: 'Failed to fetch reservations',
+          details: error.message
+        });
+      }
     } else {
       res.setHeader('Allow', ['GET', 'POST']);
       res.status(405).end(`Method ${req.method} Not Allowed`);
