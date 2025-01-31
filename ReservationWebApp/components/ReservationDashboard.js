@@ -141,28 +141,6 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     </div>
   );
 
-  // Function to handle table assignment
-  const handleTableAssign = async (reservationId, tableNumber) => {
-    try {
-      const response = await fetch(`/api/reservations/${reservationId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ table: tableNumber }),
-      });
-
-      if (!response.ok) throw new Error('Failed to assign table');
-      await onStatusUpdate();
-      setShowTableDialog(false);
-      setSelectedTable('');
-    } catch (error) {
-      console.error('Error assigning table:', error);
-      alert('Failed to assign table');
-    }
-  };
-
   // Table Assignment Dialog Component
   const TableAssignDialog = ({ reservation }) => (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
@@ -271,7 +249,10 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
           </div>
         </div>
       </div>
-
+      <TableLayout 
+  reservations={reservations}
+  onTableSelect={handleTableSelect}
+/>
       {/* Reservations List */}
           <div className="space-y-4">
             {filteredReservations.length === 0 ? (
