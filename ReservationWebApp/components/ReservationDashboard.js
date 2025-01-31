@@ -195,7 +195,10 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       </div>
     </div>
   );
-
+  const isFriday = (dateString) => {
+    const date = new Date(dateString);
+    return date.getDay() === 5; // 5 corresponds to Friday
+  };
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
       <Notifications reservations={reservations} />
@@ -269,8 +272,11 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
           filteredReservations.map((reservation, index) => (
             <div
               key={index}
-              className="bg-white rounded-lg shadow p-6 flex items-center justify-between hover:shadow-md transition-shadow"
+              className={`bg-white rounded-lg shadow p-6 flex items-center justify-between hover:shadow-md transition-shadow ${
+                isFriday(convertDate(reservation.date)) ? 'bg-blue-50' : ''
+              }`}
             >
+              {/* Rest of the reservation card content */}
               <div className="flex items-center space-x-8">
                 <div className="flex items-center space-x-2">
                   <Calendar className="w-5 h-5 text-gray-500" />
@@ -301,10 +307,10 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                 </div>
               </div>
               {reservation.notes && (
-                    <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                      Notes: <strong>{reservation.notes}</strong>
-                    </div>
-                  )}
+                <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                  Notes: <strong>{reservation.notes}</strong>
+                </div>
+              )}
               <div className="flex items-center space-x-4">
                 <span className={`px-3 py-1 rounded-full text-sm ${
                   reservation.status === 'confirmed' ? 'bg-green-100 text-green-800' :
@@ -316,7 +322,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                 </span>
 
                 <div className="flex space-x-2">
-                <button
+                  <button
                     onClick={() => {
                       setSelectedReservation(reservation);
                       setSelectedTable(reservation.table || '');

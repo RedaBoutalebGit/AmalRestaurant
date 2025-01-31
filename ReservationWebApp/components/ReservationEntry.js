@@ -12,7 +12,7 @@ const ReservationEntry = ({ onSubmit }) => {
     email: '',
     notes: '',
     source: 'phone',
-    status: 'confirmed'
+    status: ''
   });
 
   const [showConfirmation, setShowConfirmation] = useState(false);
