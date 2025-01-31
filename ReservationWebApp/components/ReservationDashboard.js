@@ -90,6 +90,12 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const filteredReservations = reservations.filter(res => {
     const reservationDate = convertDate(res.date);
     const dateMatch = !filterDate || reservationDate === filterDate;
+    // Add logging to debug status filtering
+  console.log('Status comparison:', {
+    filterStatus,
+    reservationStatus: res.status,
+    match: filterStatus === 'all' || res.status.toLowerCase() === filterStatus.toLowerCase()
+  });
     const statusMatch = filterStatus === 'all' || res.status === filterStatus;
     const nameMatch = !searchTerm || res.name.toLowerCase().includes(searchTerm.toLowerCase());
     return dateMatch && statusMatch && nameMatch;
@@ -247,9 +253,9 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
               className="border rounded p-2 focus:ring-2 focus:ring-blue-500 w-full"
             >
               <option value="all">All Status</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="pending">Pending</option>
-              <option value="waitlist">Waitlist</option>
+              <option value="confirmed">Confirmed</option> 
+              <option value="pending">Pending</option>      
+              <option value="waitlist">Waitlist</option>    
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
