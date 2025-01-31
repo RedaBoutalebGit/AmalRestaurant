@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+// components/ReservationDashboard.js
+import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Users, Phone, Mail, RefreshCw, Check, X, Clock as ClockIcon, Trash2, Search, Table } from 'lucide-react';
 import ReservationAnalytics from './ReservationAnalytics';
+import Notifications from './Notification';
 
 const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const today = new Date().toISOString().split('T')[0];
@@ -14,6 +16,15 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [showTableDialog, setShowTableDialog] = useState(false);
   const [selectedTable, setSelectedTable] = useState('');
+
+  // Auto refresh every 30 seconds
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      handleRefresh();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -188,6 +199,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
 
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
+      <Notifications reservations={reservations} />
       {showDeleteConfirm && <DeleteConfirmDialog reservation={selectedReservation} />}
       {showTableDialog && <TableAssignDialog reservation={selectedReservation} />}
 

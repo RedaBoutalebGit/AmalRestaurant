@@ -69,11 +69,11 @@ export default async function handler(req, res) {
       try {
         const response = await sheets.spreadsheets.values.append({
           spreadsheetId: process.env.SHEET_ID,
-          range: 'Reservations!A:K', // Updated to include table column
+          range: 'Reservations!A:K',
           valueInputOption: 'USER_ENTERED',
           requestBody: {
             values: [[
-              Date.now().toString(), // ID
+              Date.now().toString(),
               date,
               time,
               name,
@@ -87,9 +87,31 @@ export default async function handler(req, res) {
             ]]
           }
         });
+        // Get the complete updated list for the response
+        const updatedResponse = await sheets.spreadsheets.values.get({
+          spreadsheetId: process.env.SHEET_ID,
+          range: 'Reservations!A2:K',
+        });
+        const updatedRows = updatedResponse.data.values || [];
+        const updatedReservations = updatedRows.map((row, index) => ({
+          id: row[0] || `row-${index + 2}`,
+          date: row[1],
+          time: row[2],
+          name: row[3],
+          guests: parseInt(row[4]) || 0,
+          phone: row[5],
+          email: row[6],
+          source: row[7],
+          status: row[8],
+          notes: row[9],
+          table: row[10]
+        }));
 
-        console.log('Sheet response:', response.data);
-        res.status(201).json(response.data);
+
+        res.status(201).json({
+          message: 'Reservation created successfully',
+          reservations: updatedReservations
+        });
       } catch (sheetError) {
         console.error('Sheet API error:', sheetError);
         res.status(500).json({ 
@@ -97,15 +119,15 @@ export default async function handler(req, res) {
           details: sheetError.message 
         });
       }
+
     } else if (req.method === 'GET') {
       try {
         console.log('Fetching reservations from sheet');
         const response = await sheets.spreadsheets.values.get({
           spreadsheetId: process.env.SHEET_ID,
-          range: 'Reservations!A2:K', // Updated to include table column
+          range: 'Reservations!A2:K',
         });
 
-        console.log('Sheet response received');
         const rows = response.data.values || [];
         const reservations = rows.map((row, index) => ({
           id: row[0] || `row-${index + 2}`,
@@ -118,7 +140,7 @@ export default async function handler(req, res) {
           source: row[7],
           status: row[8],
           notes: row[9],
-          table: row[10] // Add table number
+          table: row[10]
         }));
 
         console.log(`Found ${reservations.length} reservations`);
