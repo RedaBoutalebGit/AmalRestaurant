@@ -34,7 +34,7 @@ const ReservationAnalytics = ({ reservations = [], totalSlots = 50 }) => {
             <p className="text-gray-500 text-sm">Today's Reservations</p>
             <h3 className="text-2xl font-bold">{stats.todayReservations}</h3>
           </div>
-          <Calendar className="w-8 h-8 text-blue-500" />
+          <Calendar className="w-8 h-8 text-orange-500" />
         </div>
       </div>
 

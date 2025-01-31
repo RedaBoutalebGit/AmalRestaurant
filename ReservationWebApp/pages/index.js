@@ -95,8 +95,8 @@ export default function Home() {
                 onClick={() => setView('dashboard')}
                 className={`px-4 py-2 rounded-md text-sm font-medium ${
                   view === 'dashboard'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-[#e3902b] text-white'
+                    : 'text-gray-700 hover:bg-[#ffdbb0]'
                 }`}
               >
                 Dashboard
@@ -105,8 +105,8 @@ export default function Home() {
                 onClick={() => setView('entry')}
                 className={`px-4 py-2 rounded-md text-sm font-medium ${
                   view === 'entry'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-[#e3902b] text-white'
+                    : 'text-gray-700 hover:bg-[#ffdbb0]'
                 }`}
               >
                 New Reservation

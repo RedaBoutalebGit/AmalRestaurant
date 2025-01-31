@@ -221,7 +221,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
         <button
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className={`flex items-center px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all ${
+          className={`flex items-center px-4 py-2 bg-[#fce3c5] text-orange-600 rounded-lg hover:bg-[#ffcb8c] transition-all ${
             isRefreshing ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         >
