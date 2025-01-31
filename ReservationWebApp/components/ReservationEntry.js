@@ -23,7 +23,7 @@ const ReservationEntry = ({ onSubmit }) => {
     time: true,
     name: true,
     guests: true,
-    phone: true,  // Set to false to make optional
+    phone: false, 
     email: false,
     notes: false,
     source: false,

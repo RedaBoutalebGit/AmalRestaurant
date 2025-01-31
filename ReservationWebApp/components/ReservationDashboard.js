@@ -5,8 +5,7 @@ import ReservationAnalytics from './ReservationAnalytics';
 import Notifications from './Notification';
 
 const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
-  const today = new Date().toISOString().split('T')[0];
-  const [filterDate, setFilterDate] = useState(today);
+  const [filterDate, setFilterDate] = useState("");
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
