@@ -79,6 +79,13 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     const [month, day, year] = date.split('/');
     return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   };
+  const isFriday = (dateString) => {
+    if (!dateString) return false;
+    const date = new Date(dateString);
+    // Add logging to debug
+    console.log('Checking date:', dateString, 'Day:', date.getDay());
+    return date.getDay() === 5; // 5 corresponds to Friday
+  };
 
   const filteredReservations = reservations.filter(res => {
     const reservationDate = convertDate(res.date);
@@ -195,10 +202,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       </div>
     </div>
   );
-  const isFriday = (dateString) => {
-    const date = new Date(dateString);
-    return date.getDay() === 5; // 5 corresponds to Friday
-  };
+
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
       <Notifications reservations={reservations} />
@@ -263,24 +267,33 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       </div>
 
       {/* Reservations List */}
-      <div className="space-y-4">
-        {filteredReservations.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg shadow">
-            <p className="text-gray-500 text-lg">No reservations found</p>
-          </div>
-        ) : (
-          filteredReservations.map((reservation, index) => (
-            <div
-              key={index}
-              className={`bg-white rounded-lg shadow p-6 flex items-center justify-between hover:shadow-md transition-shadow ${
-                isFriday(convertDate(reservation.date)) ? 'bg-blue-50' : ''
-              }`}
-            >
+          <div className="space-y-4">
+            {filteredReservations.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-lg shadow">
+                <p className="text-gray-500 text-lg">No reservations found</p>
+              </div>
+            ) : (
+              filteredReservations.map((reservation, index) => (
+                <div
+                  key={index}
+                  className={`rounded-lg shadow p-6 flex items-center justify-between hover:shadow-md transition-shadow ${
+                    isFriday(reservation.date) 
+                      ? 'bg-yellow-50 border-l-4 border-yellow-500' 
+                      : 'bg-white'
+                  }`}
+                >
               {/* Rest of the reservation card content */}
               <div className="flex items-center space-x-8">
-                <div className="flex items-center space-x-2">
-                  <Calendar className="w-5 h-5 text-gray-500" />
-                  <span className="text-gray-700">{reservation.date}</span>
+              <div className="flex flex-col items-start space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-5 h-5 text-gray-500" />
+                    <span className="text-gray-700">{reservation.date}</span>
+                  </div>
+                  {isFriday(reservation.date) && (
+                    <span className="text-xs font-medium px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">
+                      Couscous Day
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center space-x-2">
                   <Clock className="w-5 h-5 text-gray-500" />
