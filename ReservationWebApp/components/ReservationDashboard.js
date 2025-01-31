@@ -249,10 +249,6 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
           </div>
         </div>
       </div>
-      <TableLayout 
-  reservations={reservations}
-  onTableSelect={handleTableSelect}
-/>
       {/* Reservations List */}
           <div className="space-y-4">
             {filteredReservations.length === 0 ? (
