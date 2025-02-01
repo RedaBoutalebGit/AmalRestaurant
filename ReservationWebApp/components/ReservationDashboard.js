@@ -1,8 +1,9 @@
 // components/ReservationDashboard.js
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Users, Phone, Mail, RefreshCw, Check, X, Clock as ClockIcon, Trash2, Search, Table } from 'lucide-react';
+import { Calendar, Clock, Users, Phone, Mail, RefreshCw, Check, X, Clock as ClockIcon, Trash2, Search, Table, Edit, Pencil } from 'lucide-react';
 import ReservationAnalytics from './ReservationAnalytics';
 import Notifications from './Notification';
+import EditReservationDialog from './EditReservationDialog';
 
 const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [filterDate, setFilterDate] = useState("");
@@ -15,6 +16,8 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [showTableDialog, setShowTableDialog] = useState(false);
   const [selectedTable, setSelectedTable] = useState('');
+  const [sortOrder, setSortOrder] = useState('chronological');
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   // Auto refresh every 30 seconds
   useEffect(() => {
@@ -87,18 +90,29 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     return date.getDay() === 5; // 5 corresponds to Friday
   };
 
-  const filteredReservations = reservations.filter(res => {
+  const filteredReservations = reservations
+  .filter(res => {
     const reservationDate = convertDate(res.date);
     const dateMatch = !filterDate || reservationDate === filterDate;
-    // Add logging to debug status filtering
-  console.log('Status comparison:', {
-    filterStatus,
-    reservationStatus: res.status,
-    match: filterStatus === 'all' || res.status.toLowerCase() === filterStatus.toLowerCase()
-  });
     const statusMatch = filterStatus === 'all' || res.status === filterStatus;
     const nameMatch = !searchTerm || res.name.toLowerCase().includes(searchTerm.toLowerCase());
     return dateMatch && statusMatch && nameMatch;
+  })
+  .sort((a, b) => {
+    switch (sortOrder) {
+      case 'chronological':
+        const dateA = new Date(convertDate(a.date) + ' ' + a.time);
+        const dateB = new Date(convertDate(b.date) + ' ' + b.time);
+        return dateA - dateB;
+      case 'reverse':
+        const date1 = new Date(convertDate(a.date) + ' ' + a.time);
+        const date2 = new Date(convertDate(b.date) + ' ' + b.time);
+        return date2 - date1;
+      case 'guests':
+        return b.guests - a.guests;
+      default:
+        return 0;
+    }
   });
 
   const DeleteConfirmDialog = ({ reservation }) => (
@@ -187,12 +201,73 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     </div>
   );
 
+  const handleEdit = async (updatedData) => {
+    try {
+      const response = await fetch(`/api/reservations/${selectedReservation.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(updatedData),
+      });
+  
+      if (!response.ok) throw new Error('Failed to update reservation');
+      
+      // Refresh the reservations list
+      await onStatusUpdate();
+      setShowEditDialog(false);
+    } catch (error) {
+      console.error('Error updating reservation:', error);
+      alert('Failed to update reservation');
+    }
+  };
+  
+  const handleTableAssign = async (reservationId, tableNumber) => {
+    try {
+      const response = await fetch(`/api/reservations/${reservationId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ table: tableNumber }),
+      });
+
+      if (!response.ok) throw new Error('Failed to assign table');
+      await onStatusUpdate();
+      setShowTableDialog(false);
+      setSelectedTable('');
+    } catch (error) {
+      console.error('Error assigning table:', error);
+      alert('Failed to assign table');
+    }
+  };
+  const renderSortOptions = () => (
+    <select
+      value={sortOrder}
+      onChange={(e) => setSortOrder(e.target.value)}
+      className="border rounded p-2 focus:ring-2 focus:ring-blue-500"
+    >
+      <option value="chronological">Earliest First</option>
+      <option value="reverse">Latest First</option>
+      <option value="guests">Guest Count</option>
+    </select>
+  );
+
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
       <Notifications reservations={reservations} />
       {showDeleteConfirm && <DeleteConfirmDialog reservation={selectedReservation} />}
       {showTableDialog && <TableAssignDialog reservation={selectedReservation} />}
-
+      {showEditDialog && selectedReservation && (
+        <EditReservationDialog
+          reservation={selectedReservation}
+          onClose={() => setShowEditDialog(false)}
+          onSave={handleEdit}
+        />
+      )}
+  
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold text-gray-800">Reservations Dashboard</h2>
@@ -207,15 +282,15 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
           {isRefreshing ? 'Refreshing...' : 'Refresh'}
         </button>
       </div>
-
+  
       {/* Analytics Section */}
       <ReservationAnalytics reservations={reservations} />
-
+  
       {/* Filters */}
       <div className="bg-white p-6 rounded-lg shadow mb-6">
         <h3 className="text-lg font-semibold text-gray-700 mb-4">Filters</h3>
-        <div className="flex gap-4">
-          <div className="flex items-center space-x-2 flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="flex items-center space-x-2">
             <Calendar className="w-5 h-5 text-gray-500" />
             <input
               type="date"
@@ -224,7 +299,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
               className="border rounded p-2 focus:ring-2 focus:ring-blue-500 w-full"
             />
           </div>
-          <div className="flex items-center space-x-2 flex-1">
+          <div className="flex items-center space-x-2">
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
@@ -237,7 +312,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
-          <div className="flex items-center space-x-2 flex-1">
+          <div className="flex items-center space-x-2">
             <Search className="w-5 h-5 text-gray-500" />
             <input
               type="text"
@@ -247,27 +322,39 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
               className="border rounded p-2 focus:ring-2 focus:ring-blue-500 w-full"
             />
           </div>
+          <div className="flex items-center space-x-2">
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="border rounded p-2 focus:ring-2 focus:ring-blue-500 w-full"
+            >
+              <option value="chronological">Earliest First</option>
+              <option value="reverse">Latest First</option>
+              <option value="guests">Guest Count</option>
+            </select>
+          </div>
         </div>
       </div>
+  
       {/* Reservations List */}
-          <div className="space-y-4">
-            {filteredReservations.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-lg shadow">
-                <p className="text-gray-500 text-lg">No reservations found</p>
-              </div>
-            ) : (
-              filteredReservations.map((reservation, index) => (
-                <div
-                  key={index}
-                  className={`rounded-lg shadow p-6 flex items-center justify-between hover:shadow-md transition-shadow ${
-                    isFriday(reservation.date) 
-                      ? 'bg-yellow-50 border-l-4 border-yellow-500' 
-                      : 'bg-white'
-                  }`}
-                >
-              {/* Rest of the reservation card content */}
-              <div className="flex items-center space-x-8">
-              <div className="flex flex-col items-start space-y-1">
+      <div className="space-y-4">
+        {filteredReservations.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-lg shadow">
+            <p className="text-gray-500 text-lg">No reservations found</p>
+          </div>
+        ) : (
+          filteredReservations.map((reservation, index) => (
+            <div
+              key={index}
+              className={`rounded-lg shadow p-6 flex flex-col lg:flex-row items-start lg:items-center justify-between hover:shadow-md transition-shadow ${
+                isFriday(reservation.date) 
+                  ? 'bg-yellow-50 border-l-4 border-yellow-500' 
+                  : 'bg-white'
+              }`}
+            >
+              {/* Reservation Details */}
+              <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 lg:space-y-0 lg:space-x-8">
+                <div className="flex flex-col items-start space-y-1">
                   <div className="flex items-center space-x-2">
                     <Calendar className="w-5 h-5 text-gray-500" />
                     <span className="text-gray-700">{reservation.date}</span>
@@ -302,12 +389,17 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                   )}
                 </div>
               </div>
+  
+              {/* Notes Section */}
               {reservation.notes && (
-                <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                  Notes: <strong>{reservation.notes}</strong>
+                <div className="mt-4 lg:mt-0 text-sm text-gray-600 bg-gray-50 p-2 rounded w-full lg:w-auto">
+                  <strong>Notes:</strong> {reservation.notes}
                 </div>
               )}
-              <div className="flex items-center space-x-4">
+  
+              {/* Actions Section */}
+              <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 lg:space-y-0 lg:space-x-4 mt-4 lg:mt-0">
+                {/* Status Badge */}
                 <span className={`px-3 py-1 rounded-full text-sm ${
                   reservation.status === 'confirmed' ? 'bg-green-100 text-green-800' :
                   reservation.status === 'pending' ? 'bg-orange-100 text-orange-800' :
@@ -316,8 +408,22 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                 }`}>
                   {reservation.status}
                 </span>
-
-                <div className="flex space-x-2">
+  
+                {/* Action Buttons */}
+                <div className="flex items-center space-x-2">
+                  {/* Edit Button */}
+                  <button
+                    onClick={() => {
+                      setSelectedReservation(reservation);
+                      setShowEditDialog(true);
+                    }}
+                    className="p-2 bg-orange-50 text-orange-600 rounded-full hover:bg-orange-100"
+                    title="Edit Reservation"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+  
+                  {/* Table Assignment */}
                   <button
                     onClick={() => {
                       setSelectedReservation(reservation);
@@ -329,11 +435,15 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                   >
                     <Table className="w-4 h-4" />
                   </button>
+  
+                  {/* Current Table Display */}
                   {reservation.table && (
                     <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm">
                       Table {reservation.table}
                     </span>
                   )}
+  
+                  {/* Status Update Buttons */}
                   {reservation.status !== 'confirmed' && (
                     <button
                       onClick={() => handleStatusUpdate(reservation.id, 'confirmed')}
@@ -366,7 +476,8 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                       <X className="w-4 h-4" />
                     </button>
                   )}
-
+  
+                  {/* Delete Button */}
                   <button
                     onClick={() => {
                       setSelectedReservation(reservation);
@@ -378,11 +489,12 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>
+  
+                  {/* Loading Indicator */}
+                  {(updatingId === reservation.id || deletingId === reservation.id) && (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                  )}
                 </div>
-
-                {(updatingId === reservation.id || deletingId === reservation.id) && (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                )}
               </div>
             </div>
           ))
