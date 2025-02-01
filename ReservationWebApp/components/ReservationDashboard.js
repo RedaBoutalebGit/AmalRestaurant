@@ -18,12 +18,14 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [selectedTable, setSelectedTable] = useState('');
   const [sortOrder, setSortOrder] = useState('chronological');
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showPastReservations, setShowPastReservations] = useState(false);
+
 
   // Auto refresh every 30 seconds
   useEffect(() => {
     const intervalId = setInterval(() => {
       handleRefresh();
-    }, 30000); // 30 seconds
+    }, 60000); // 60 seconds
 
     return () => clearInterval(intervalId);
   }, []);
@@ -86,8 +88,17 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     if (!dateString) return false;
     const date = new Date(dateString);
     // Add logging to debug
-    console.log('Checking date:', dateString, 'Day:', date.getDay());
+    // console.log('Checking date:', dateString, 'Day:', date.getDay());
     return date.getDay() === 5; // 5 corresponds to Friday
+  };
+  const isDatePassed = (reservationDate) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of day for fair comparison
+    
+    // Convert reservation date from MM/DD/YYYY to Date object
+    const [month, day, year] = reservationDate.split('/');
+    const date = new Date(year, month - 1, day);
+    return date < today;
   };
 
   const filteredReservations = reservations
@@ -96,7 +107,8 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     const dateMatch = !filterDate || reservationDate === filterDate;
     const statusMatch = filterStatus === 'all' || res.status === filterStatus;
     const nameMatch = !searchTerm || res.name.toLowerCase().includes(searchTerm.toLowerCase());
-    return dateMatch && statusMatch && nameMatch;
+    const isActive = showPastReservations || !isDatePassed(res.date); // Modified line
+    return dateMatch && statusMatch && nameMatch && isActive;
   })
   .sort((a, b) => {
     switch (sortOrder) {
@@ -203,23 +215,41 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
 
   const handleEdit = async (updatedData) => {
     try {
+      // console.log('Starting edit with data:', updatedData);
+      
       const response = await fetch(`/api/reservations/${selectedReservation.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify(updatedData),
+        body: JSON.stringify({
+          date: updatedData.date,
+          time: updatedData.time,
+          name: updatedData.name,
+          guests: updatedData.guests,
+          phone: updatedData.phone,
+          email: updatedData.email,
+          notes: updatedData.notes,
+          status: updatedData.status,
+          // Preserve existing values
+          source: selectedReservation.source,
+          table: selectedReservation.table
+        }),
       });
   
-      if (!response.ok) throw new Error('Failed to update reservation');
-      
-      // Refresh the reservations list
-      await onStatusUpdate();
+      const responseData = await response.json();
+     //  console.log('Edit response:', responseData);
+  
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to update reservation');
+      }
+  
+      await onStatusUpdate(); // Refresh the list
       setShowEditDialog(false);
     } catch (error) {
-      console.error('Error updating reservation:', error);
-      alert('Failed to update reservation');
+      console.error('Error in handleEdit:', error);
+      alert('Failed to update reservation: ' + error.message);
     }
   };
   
@@ -263,7 +293,10 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       {showEditDialog && selectedReservation && (
         <EditReservationDialog
           reservation={selectedReservation}
-          onClose={() => setShowEditDialog(false)}
+          onClose={() => {
+            setShowEditDialog(false);
+            setSelectedReservation(null); // Clear selected reservation
+          }}
           onSave={handleEdit}
         />
       )}
@@ -333,6 +366,17 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
               <option value="guests">Guest Count</option>
             </select>
           </div>
+          <div className="flex items-center space-x-2">
+    <label className="text-sm text-gray-600">
+      <input
+        type="checkbox"
+        checked={showPastReservations}
+        onChange={(e) => setShowPastReservations(e.target.checked)}
+        className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+      />
+      <span className="ml-2">Show past reservations</span>
+    </label>
+  </div>
         </div>
       </div>
   

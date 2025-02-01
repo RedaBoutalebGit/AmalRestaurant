@@ -4,9 +4,9 @@ import { google } from 'googleapis';
 export default async function handler(req, res) {
   try {
     // Log incoming request
-    console.log('Request method:', req.method);
-    console.log('Request body:', req.body);
-    console.log('Request cookies:', req.headers.cookie);
+    // console.log('Request method:', req.method);
+    // console.log('Request body:', req.body);
+    // console.log('Request cookies:', req.headers.cookie);
 
     // Initialize OAuth2 client
     const oauth2Client = new google.auth.OAuth2(
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     try {
       const tokenCookie = cookies.split(';').find(c => c.trim().startsWith('auth_tokens='));
       const tokens = tokenCookie ? JSON.parse(decodeURIComponent(tokenCookie.split('=')[1])) : null;
-      console.log('Parsed tokens:', tokens ? 'Found' : 'Not found');
+      // console.log('Parsed tokens:', tokens ? 'Found' : 'Not found');
 
       if (!tokens) {
         return res.status(401).json({
@@ -52,7 +52,7 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
 
     if (req.method === 'POST') {
-      console.log('Processing POST request');
+      // console.log('Processing POST request');
       const { date, time, name, guests, phone, email, source, status, notes } = req.body;
 
       // Validate required fields
@@ -63,7 +63,7 @@ export default async function handler(req, res) {
       }
 
       // Log sheet ID
-      console.log('Using Sheet ID:', process.env.SHEET_ID);
+      // console.log('Using Sheet ID:', process.env.SHEET_ID);
 
       // Attempt to append data
       try {
@@ -122,7 +122,7 @@ export default async function handler(req, res) {
 
     } else if (req.method === 'GET') {
       try {
-        console.log('Fetching reservations from sheet');
+        // console.log('Fetching reservations from sheet');
         const response = await sheets.spreadsheets.values.get({
           spreadsheetId: process.env.SHEET_ID,
           range: 'Reservations!A2:K',
@@ -143,7 +143,7 @@ export default async function handler(req, res) {
           table: row[10]
         }));
 
-        console.log(`Found ${reservations.length} reservations`);
+        // console.log(`Found ${reservations.length} reservations`);
         res.status(200).json(reservations);
       } catch (error) {
         console.error('Error fetching reservations:', error);
