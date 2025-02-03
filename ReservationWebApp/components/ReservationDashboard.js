@@ -42,7 +42,6 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const handleStatusUpdate = async (reservationId, newStatus) => {
     setUpdatingId(reservationId);
     try {
-      // Regular status update
       const response = await fetch(`/api/reservations/${reservationId}`, {
         method: 'PATCH',
         headers: {
@@ -51,30 +50,8 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
         credentials: 'include',
         body: JSON.stringify({ status: newStatus }),
       });
-  
+
       if (!response.ok) throw new Error('Failed to update status');
-  
-      // If status is confirmed, send email
-      if (newStatus === 'confirmed') {
-        const reservation = reservations.find(r => r.id === reservationId);
-        if (reservation?.email) {
-          try {
-            const emailResponse = await fetch('/api/send-confirmation-email', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ reservation }),
-            });
-            if (!emailResponse.ok) {
-              console.error('Failed to send confirmation email');
-            }
-          } catch (emailError) {
-            console.error('Error sending confirmation email:', emailError);
-          }
-        }
-      }
-  
       await onStatusUpdate();
     } catch (error) {
       console.error('Error updating status:', error);
@@ -111,7 +88,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     if (!dateString) return false;
     const date = new Date(dateString);
     // Add logging to debug
-    console.log('Checking date:', dateString, 'Day:', date.getDay());
+    // console.log('Checking date:', dateString, 'Day:', date.getDay());
     return date.getDay() === 5; // 5 corresponds to Friday
   };
   const isDatePassed = (reservationDate) => {
@@ -238,7 +215,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
 
   const handleEdit = async (updatedData) => {
     try {
-      console.log('Starting edit with data:', updatedData);
+      // console.log('Starting edit with data:', updatedData);
       
       const response = await fetch(`/api/reservations/${selectedReservation.id}`, {
         method: 'PATCH',
@@ -262,7 +239,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       });
   
       const responseData = await response.json();
-      console.log('Edit response:', responseData);
+     //  console.log('Edit response:', responseData);
   
       if (!response.ok) {
         throw new Error(responseData.error || 'Failed to update reservation');
