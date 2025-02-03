@@ -287,6 +287,22 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       <option value="guests">Guest Count</option>
     </select>
   );
+  const getEmailStatus = (reservation) => {
+    if (reservation.emailSent) { // Column M has timestamp
+      return (
+        <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
+          Email Sent
+        </span>
+      );
+    } else if (reservation.status === 'confirmed') {
+      return (
+        <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">
+          Sending Email...
+        </span>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
@@ -455,6 +471,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                 }`}>
                   {reservation.status}
                 </span>
+                {getEmailStatus(reservation)}
   
                 {/* Action Buttons */}
                 <div className="flex items-center space-x-2">

@@ -140,7 +140,8 @@ export default async function handler(req, res) {
           source: row[7],
           status: row[8],
           notes: row[9],
-          table: row[10]
+          table: row[10],
+          emailSent: row[12] || null // Column M for email status
         }));
 
         // console.log(`Found ${reservations.length} reservations`);
