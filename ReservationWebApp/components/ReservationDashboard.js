@@ -48,9 +48,12 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ 
+          status: newStatus,
+          sendEmail: newStatus === 'confirmed' // Add this flag
+        }),
       });
-
+  
       if (!response.ok) throw new Error('Failed to update status');
       await onStatusUpdate();
     } catch (error) {

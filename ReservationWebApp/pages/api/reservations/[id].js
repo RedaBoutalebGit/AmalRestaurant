@@ -102,6 +102,28 @@ export default async function handler(req, res) {
       const currentRow = rows[rowIndex];
       // console.log('Current row data:', currentRow);
 
+      if (updates.status === 'confirmed' && updates.sendEmail) {
+        // Trigger Google Apps Script
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId: process.env.SHEET_ID,
+          requestBody: {
+            requests: [{
+              insertDeveloperMetadata: {
+                range: {
+                  startRowIndex: rowIndex,
+                  endRowIndex: rowIndex + 1
+                },
+                developerMetadata: {
+                  metadataKey: "sendConfirmation",
+                  metadataValue: "true",
+                  visibility: "PROJECT"
+                }
+              }
+            }]
+          }
+        });
+      }
+      
       // Check if it's a simple status or table update
       if ((updates.status !== undefined && Object.keys(updates).length === 1) || 
           (updates.table !== undefined && Object.keys(updates).length === 1)) {
