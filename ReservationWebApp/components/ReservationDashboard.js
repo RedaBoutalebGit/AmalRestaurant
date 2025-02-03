@@ -42,43 +42,19 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const handleStatusUpdate = async (reservationId, newStatus) => {
     setUpdatingId(reservationId);
     try {
-      // Find the reservation
-      const reservation = reservations.find(r => r.id === reservationId);
-      
-      if (!reservation) {
-        throw new Error('Reservation not found');
-      }
-  
-      // Update status
-      const response = await fetch(`/api/reservations/${reservationId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ status: newStatus }),
-      });
-  
-      if (!response.ok) throw new Error('Failed to update status');
-  
-      // If confirming, send email
-      if (newStatus === 'confirmed' && reservation.email) {
+      if (newStatus === 'confirmed') {
+        const reservation = reservations.find(r => r.id === reservationId);
         await fetch('/api/confirm-reservation', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            reservationId,
-            rowIndex: reservation.rowIndex // Now we have the correct row number
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ rowIndex: reservation.rowIndex })
         });
       }
-  
       await onStatusUpdate();
     } catch (error) {
-      console.error('Error updating status:', error);
-      alert('Failed to update reservation status');
+      console.error('Error:', error);
+      alert('Failed to update status');
     } finally {
       setUpdatingId(null);
     }
