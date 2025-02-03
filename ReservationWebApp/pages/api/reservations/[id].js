@@ -2,6 +2,11 @@
 import { google } from 'googleapis';
 
 export default async function handler(req, res) {
+   // Enhanced logging for all environments
+   console.log('Request Method:', req.method);
+   console.log('Request Query ID:', req.query.id);
+   console.log('Request Body:', req.body);
+   console.log('Request Cookies:', req.headers.cookie);
   // Initialize Google Sheets client
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
@@ -9,33 +14,75 @@ export default async function handler(req, res) {
     process.env.GOOGLE_REDIRECT_URI
   );
 
-  // Get auth tokens from cookie
+  // Detailed cookie parsing and token extraction
   const cookies = req.headers.cookie;
-  if (!cookies?.includes('auth_tokens')) {
+  console.log('Raw Cookies:', cookies);
+
+  if (!cookies) {
+    console.error('No cookies found in the request');
     return res.status(401).json({
-      error: 'Not authenticated',
-      loginUrl: '/api/auth/google'
+      error: 'No cookies present',
+      detail: 'Authentication cookies are missing'
     });
   }
 
-  const tokenCookie = cookies.split(';').find(c => c.trim().startsWith('auth_tokens='));
-  const tokens = tokenCookie ? JSON.parse(decodeURIComponent(tokenCookie.split('=')[1])) : null;
+  try {
+    // More robust token extraction
+    const tokenCookie = cookies.split(';')
+      .map(cookie => cookie.trim())
+      .find(cookie => cookie.startsWith('auth_tokens='));
 
-  if (!tokens) {
-    return res.status(401).json({
-      error: 'Invalid authentication',
-      loginUrl: '/api/auth/google'
-    });
-  }
+    console.log('Token Cookie Found:', !!tokenCookie);
 
-  oauth2Client.setCredentials(tokens);
-  const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
-  const { id } = req.query;
+    if (!tokenCookie) {
+      console.error('No auth_tokens cookie found');
+      return res.status(401).json({
+        error: 'Authentication token not found',
+        loginUrl: '/api/auth/google'
+      });
+    }
+
+    // Safe token parsing
+    let tokens;
+    try {
+      const tokenString = tokenCookie.split('=')[1];
+      tokens = JSON.parse(decodeURIComponent(tokenString));
+      console.log('Parsed Tokens:', Object.keys(tokens));
+    } catch (parseError) {
+      console.error('Token Parsing Error:', parseError);
+      return res.status(401).json({
+        error: 'Failed to parse authentication tokens',
+        detail: parseError.message
+      });
+    }
+
+    // Validate tokens
+    if (!tokens.access_token) {
+      console.error('Invalid tokens: No access token');
+      return res.status(401).json({
+        error: 'Invalid authentication',
+        detail: 'Access token is missing'
+      });
+    }
+
+    // Set credentials with detailed error handling
+    try {
+      oauth2Client.setCredentials(tokens);
+    } catch (credentialError) {
+      console.error('Credential Setting Error:', credentialError);
+      return res.status(401).json({
+        error: 'Failed to set credentials',
+        detail: credentialError.message
+      });
+    }
+
+    const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
+    const { id } = req.query;
 
   try {
     // Handle DELETE request
     if (req.method === 'DELETE') {
-      // console.log('Processing DELETE request for ID:', id);
+      console.log('Processing DELETE request for ID:', id);
 
       // Get all data to find the row
       const response = await sheets.spreadsheets.values.get({
@@ -47,7 +94,7 @@ export default async function handler(req, res) {
       const rowIndex = rows.findIndex(row => row[0] === id);
 
       if (rowIndex === -1) {
-        // console.log('Reservation not found with ID:', id);
+         console.log('Reservation not found with ID:', id);
         return res.status(404).json({ error: 'Reservation not found' });
       }
 
@@ -75,15 +122,15 @@ export default async function handler(req, res) {
         }
       });
 
-      // console.log('Successfully deleted reservation');
+      console.log('Successfully deleted reservation');
       return res.status(200).json({ message: 'Reservation deleted successfully' });
     }
 
     // Handle PATCH request
     if (req.method === 'PATCH') {
       const updates = req.body;
-     //  console.log('Processing PATCH request for ID:', id);
-      // console.log('Received updates:', updates);
+     console.log('Processing PATCH request for ID:', id);
+    console.log('Received updates:', updates);
 
       // Get current data
       const response = await sheets.spreadsheets.values.get({
@@ -95,21 +142,21 @@ export default async function handler(req, res) {
       const rowIndex = rows.findIndex(row => row[0] === id);
 
       if (rowIndex === -1) {
-       //  console.log('Reservation not found with ID:', id);
+        console.log('Reservation not found with ID:', id);
         return res.status(404).json({ error: 'Reservation not found' });
       }
 
       const currentRow = rows[rowIndex];
-      // console.log('Current row data:', currentRow);
+       console.log('Current row data:', currentRow);
 
       // Check if it's a simple status or table update
       if ((updates.status !== undefined && Object.keys(updates).length === 1) || 
           (updates.table !== undefined && Object.keys(updates).length === 1)) {
-        // console.log('Performing simple status/table update');
+         console.log('Performing simple status/table update');
         
         // Update status if provided
         if (updates.status !== undefined) {
-          // console.log('Updating status to:', updates.status);
+           console.log('Updating status to:', updates.status);
           await sheets.spreadsheets.values.update({
             spreadsheetId: process.env.SHEET_ID,
             range: `Reservations!I${rowIndex + 1}`,
@@ -122,7 +169,7 @@ export default async function handler(req, res) {
 
         // Update table if provided
         if (updates.table !== undefined) {
-         //  console.log('Updating table to:', updates.table);
+         console.log('Updating table to:', updates.table);
           await sheets.spreadsheets.values.update({
             spreadsheetId: process.env.SHEET_ID,
             range: `Reservations!K${rowIndex + 1}`,
@@ -134,7 +181,7 @@ export default async function handler(req, res) {
         }
       } else {
         // Full reservation update
-       //  console.log('Performing full reservation update');
+       console.log('Performing full reservation update');
         
         const updatedRow = [
           id, // Keep original ID
@@ -150,7 +197,7 @@ export default async function handler(req, res) {
           currentRow[10] || '' // Preserve table assignment
         ];
 
-        // console.log('Updated row to be written:', updatedRow);
+         console.log('Updated row to be written:', updatedRow);
 
         try {
           await sheets.spreadsheets.values.update({
@@ -161,7 +208,7 @@ export default async function handler(req, res) {
               values: [updatedRow]
             }
           });
-         //  console.log('Row updated successfully');
+        console.log('Row updated successfully');
         } catch (updateError) {
           console.error('Error updating row:', updateError);
           throw updateError;
@@ -188,4 +235,13 @@ export default async function handler(req, res) {
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
+}
+catch (globalError) {
+  console.error('Global Error Handler:', globalError);
+  return res.status(500).json({
+    error: 'Unhandled server error',
+    detail: globalError.message,
+    stack: globalError.stack
+  });
+}
 }
