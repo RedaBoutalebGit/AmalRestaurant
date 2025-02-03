@@ -123,7 +123,7 @@ export default async function handler(req, res) {
           }
         });
       }
-      
+
       // Check if it's a simple status or table update
       if ((updates.status !== undefined && Object.keys(updates).length === 1) || 
           (updates.table !== undefined && Object.keys(updates).length === 1)) {
@@ -131,16 +131,26 @@ export default async function handler(req, res) {
         
         // Update status if provided
         if (updates.status !== undefined) {
-          // console.log('Updating status to:', updates.status);
-          await sheets.spreadsheets.values.update({
-            spreadsheetId: process.env.SHEET_ID,
-            range: `Reservations!I${rowIndex + 1}`,
-            valueInputOption: 'RAW',
-            requestBody: {
-              values: [[updates.status]]
-            }
-          });
-        }
+  try {
+    console.log('Updating status:', {
+      spreadsheetId: process.env.SHEET_ID,
+      range: `Reservations!I${rowIndex + 1}`,
+      value: updates.status
+    });
+    
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: process.env.SHEET_ID,
+      range: `Reservations!I${rowIndex + 1}`,
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [[updates.status]]
+      }
+    });
+  } catch (error) {
+    console.error('Status update error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+}
 
         // Update table if provided
         if (updates.table !== undefined) {
