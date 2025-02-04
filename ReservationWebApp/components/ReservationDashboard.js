@@ -50,10 +50,10 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
         credentials: 'include',
         body: JSON.stringify({ 
           status: newStatus,
-          sendEmail: newStatus === 'confirmed' // Add this flag
+          sendEmail: newStatus === 'confirmed' // This triggers the email
         }),
       });
-  
+
       if (!response.ok) throw new Error('Failed to update status');
       await onStatusUpdate();
     } catch (error) {
@@ -62,7 +62,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     } finally {
       setUpdatingId(null);
     }
-  };
+};
 
   const handleDelete = async (id) => {
     setDeletingId(id);
@@ -463,6 +463,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
               {/* Actions Section */}
               <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 lg:space-y-0 lg:space-x-4 mt-4 lg:mt-0">
                 {/* Status Badge */}
+                <div className="flex items-center space-x-2">
                 <span className={`px-3 py-1 rounded-full text-sm ${
                   reservation.status === 'confirmed' ? 'bg-green-100 text-green-800' :
                   reservation.status === 'pending' ? 'bg-orange-100 text-orange-800' :
@@ -472,6 +473,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                   {reservation.status}
                 </span>
                 {getEmailStatus(reservation)}
+                </div>
   
                 {/* Action Buttons */}
                 <div className="flex items-center space-x-2">
