@@ -18,10 +18,13 @@ async function generateUniqueId(sheets) {
     let maxNum = 0;
     
     existingIds.forEach(row => {
-      if (row[0] && row[0].startsWith('R')) {
-        const num = parseInt(row[0].substring(1));
-        if (!isNaN(num) && num > maxNum) {
-          maxNum = num;
+      if (row[0]) {  // Check if ID exists
+        const idStr = String(row[0]);  // Convert to string
+        if (idStr.startsWith('R')) {
+          const num = parseInt(idStr.substring(1));
+          if (!isNaN(num) && num > maxNum) {
+            maxNum = num;
+          }
         }
       }
     });
