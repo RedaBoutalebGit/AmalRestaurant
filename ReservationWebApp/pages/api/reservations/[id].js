@@ -110,22 +110,34 @@ export default async function handler(req, res) {
             // First, update the status
             await sheets.spreadsheets.values.update({
               spreadsheetId: process.env.SHEET_ID,
-              range: `Reservations!I${rowIndex + 1}`, // Status column
+              range: `Reservations!I${rowIndex + 1}`,
               valueInputOption: 'RAW',
               requestBody: {
-                values: [['confirmed']]
+                values: [[updates.status]]
               }
             });
         
-            // Run the script to send email
-            await sheets.scripts.run({
-              scriptId: process.env.APPS_SCRIPT_ID,
-              function: 'handleConfirmation',
-              parameters: [rowIndex + 1]
+            // Then trigger email by setting the sendEmail flag
+            await sheets.spreadsheets.values.update({
+              spreadsheetId: process.env.SHEET_ID,
+              range: `Reservations!L${rowIndex + 1}`,
+              valueInputOption: 'RAW',
+              requestBody: {
+                values: [['sendEmail']]
+              }
             });
         
+            // Set a timestamp for tracking
+            await sheets.spreadsheets.values.update({
+              spreadsheetId: process.env.SHEET_ID,
+              range: `Reservations!M${rowIndex + 1}`,
+              valueInputOption: 'RAW',
+              requestBody: {
+                values: [[new Date().toISOString()]]
+              }
+            });
           } catch (error) {
-            console.error('Error in confirmation process:', error);
+            console.error('Error triggering email:', error);
             throw error;
           }
         }
