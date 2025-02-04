@@ -288,18 +288,36 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     </select>
   );
   const getEmailStatus = (reservation) => {
-    if (reservation.emailSent) { // Column M has timestamp
-      return (
-        <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
-          Email Sent
-        </span>
-      );
-    } else if (reservation.status === 'confirmed') {
-      return (
-        <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">
-          Sending Email...
-        </span>
-      );
+    switch(reservation.emailQueue) { // Column L
+      case 'queued':
+        return (
+          <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">
+            Email Queued
+          </span>
+        );
+      case 'processing':
+        return (
+          <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+            Sending Email...
+          </span>
+        );
+      case null:
+        if (reservation.emailSent) { // Column M has timestamp
+          return (
+            <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
+              Email Sent
+            </span>
+          );
+        }
+        break;
+      default:
+        if (reservation.emailQueue?.startsWith('failed:')) {
+          return (
+            <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded">
+              Email Failed
+            </span>
+          );
+        }
     }
     return null;
   };

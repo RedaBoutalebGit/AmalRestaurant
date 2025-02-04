@@ -107,37 +107,27 @@ export default async function handler(req, res) {
          // If status is confirmed, trigger email
          if (updates.status === 'confirmed') {
           try {
-            // First, update the status
+            // First update the status to "confirming"
             await sheets.spreadsheets.values.update({
               spreadsheetId: process.env.SHEET_ID,
               range: `Reservations!I${rowIndex + 1}`,
               valueInputOption: 'RAW',
               requestBody: {
-                values: [[updates.status]]
+                values: [['confirming']]
               }
             });
         
-            // Then trigger email by setting the sendEmail flag
+            // Set email queue status
             await sheets.spreadsheets.values.update({
               spreadsheetId: process.env.SHEET_ID,
               range: `Reservations!L${rowIndex + 1}`,
               valueInputOption: 'RAW',
               requestBody: {
-                values: [['sendEmail']]
-              }
-            });
-        
-            // Set a timestamp for tracking
-            await sheets.spreadsheets.values.update({
-              spreadsheetId: process.env.SHEET_ID,
-              range: `Reservations!M${rowIndex + 1}`,
-              valueInputOption: 'RAW',
-              requestBody: {
-                values: [[new Date().toISOString()]]
+                values: [['queued']]
               }
             });
           } catch (error) {
-            console.error('Error triggering email:', error);
+            console.error('Error queuing email:', error);
             throw error;
           }
         }
