@@ -12,7 +12,7 @@ const ReservationEntry = ({ onSubmit }) => {
     email: '',
     notes: '',
     source: 'phone',
-    status: 'confirmed'
+    status: 'pending'
   });
 
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -65,7 +65,7 @@ const ReservationEntry = ({ onSubmit }) => {
         email: '',
         notes: '',
         source: 'phone',
-        status: 'confirmed'
+        status: 'pending'
       });
       setShowConfirmation(false);
       onSubmit(result);
