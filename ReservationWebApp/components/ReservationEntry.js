@@ -3,17 +3,8 @@ import React, { useState } from 'react';
 import { Calendar, Clock, Users, Phone, Mail, Save, X } from 'lucide-react';
 
 const ReservationEntry = ({ onSubmit }) => {
-  // Function to get today's date in YYYY-MM-DD format
-  const getTodayDate = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
   const [formData, setFormData] = useState({
-    date: getTodayDate(), // Set default value to today's date
+    date: '',
     time: '',
     name: '',
     guests: '',
@@ -21,7 +12,7 @@ const ReservationEntry = ({ onSubmit }) => {
     email: '',
     notes: '',
     source: 'phone',
-    status: 'pending'
+    status: 'confirmed'
   });
 
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -32,7 +23,7 @@ const ReservationEntry = ({ onSubmit }) => {
     time: true,
     name: true,
     guests: true,
-    phone: false, 
+    phone: true,  // Set to false to make optional
     email: false,
     notes: false,
     source: false,
@@ -65,24 +56,24 @@ const ReservationEntry = ({ onSubmit }) => {
       }
 
       const result = await response.json();
-    setFormData({
-      date: getTodayDate(), // Set to today's date instead of empty string
-      time: '',
-      name: '',
-      guests: '',
-      phone: '',
-      email: '',
-      notes: '',
-      source: 'phone',
-      status: 'pending'
-    });
-    setShowConfirmation(false);
-    onSubmit(result);
-  } catch (error) {
-    console.error('Error saving reservation:', error);
-    alert(error.message);
-  }
-};
+      setFormData({
+        date: '',
+        time: '',
+        name: '',
+        guests: '',
+        phone: '',
+        email: '',
+        notes: '',
+        source: 'phone',
+        status: 'confirmed'
+      });
+      setShowConfirmation(false);
+      onSubmit(result);
+    } catch (error) {
+      console.error('Error saving reservation:', error);
+      alert(error.message);
+    }
+  };
 
   const ConfirmationDialog = () => (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
@@ -144,6 +135,9 @@ const ReservationEntry = ({ onSubmit }) => {
       {showConfirmation && <ConfirmationDialog />}
       
       <h2 className="text-2xl font-bold mb-6">New Reservation</h2>
+      <p className="text-sm text-gray-500 mb-6">
+        Fields marked with <span className="text-red-500">*</span> are required
+      </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
@@ -182,9 +176,6 @@ const ReservationEntry = ({ onSubmit }) => {
                 required={requiredFields.time}
                 value={formData.time}
                 onChange={(e) => setFormData({...formData, time: e.target.value})}
-                step="900"
-                min="11:00" // Restaurant opens at 11:00
-                max="23:00" // Last reservation at 23:00
                 className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -317,7 +308,7 @@ const ReservationEntry = ({ onSubmit }) => {
 
         <button
           type="submit"
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           <Save className="w-5 h-5 mr-2" />
           Save Reservation

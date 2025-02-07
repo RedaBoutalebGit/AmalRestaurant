@@ -131,6 +131,34 @@ export default async function handler(req, res) {
             throw error;
           }
         }
+
+        if (updates.status === 'cancelled') {
+          try {
+            // Update status
+            await sheets.spreadsheets.values.update({
+              spreadsheetId: process.env.SHEET_ID,
+              range: `Reservations!I${rowIndex + 1}`,
+              valueInputOption: 'RAW',
+              requestBody: {
+                values: [['cancelled']]
+              }
+            });
+        
+            // Queue cancellation email
+            await sheets.spreadsheets.values.update({
+              spreadsheetId: process.env.SHEET_ID,
+              range: `Reservations!L${rowIndex + 1}`,
+              valueInputOption: 'RAW',
+              requestBody: {
+                values: [['queuedCancellation']]
+              }
+            });
+          } catch (error) {
+            console.error('Error queuing cancellation email:', error);
+            throw error;
+          }
+        }
+        
        }
 
        // Update table if provided
