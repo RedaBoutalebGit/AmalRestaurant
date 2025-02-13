@@ -72,44 +72,44 @@ export default async function handler(req, res) {
     } else if (req.method === 'GET') {
       const { itemId } = req.query;
       
-      let range = 'InventoryMovements!A:F';
-      if (itemId) {
-        // If itemId provided, filter in memory
+      try {
+        // First get inventory data to map names
+        const inventoryResponse = await sheets.spreadsheets.values.get({
+          spreadsheetId: process.env.SHEET_ID,
+          range: 'Inventory!A:B', // Get ID and Name columns
+        });
+        
+        const inventoryMap = {};
+        inventoryResponse.data.values?.forEach(row => {
+          inventoryMap[row[0]] = row[1]; // Map ID to Name
+        });
+    
+        // Then get movements
         const response = await sheets.spreadsheets.values.get({
           spreadsheetId: process.env.SHEET_ID,
-          range,
+          range: 'InventoryMovements!A:F',
         });
-
-        const rows = response.data.values || [];
-        const movements = rows
-          .filter(row => row[1] === itemId)
-          .map(row => ({
-            id: row[0],
-            itemId: row[1],
-            type: row[2],
-            quantity: parseFloat(row[3]),
-            date: row[4],
-            reason: row[5]
-          }));
-
-        res.status(200).json(movements);
-      } else {
-        const response = await sheets.spreadsheets.values.get({
-          spreadsheetId: process.env.SHEET_ID,
-          range,
-        });
-
+    
         const rows = response.data.values || [];
         const movements = rows.map(row => ({
           id: row[0],
           itemId: row[1],
+          itemName: inventoryMap[row[1]] || 'Unknown Item', // Add item name
           type: row[2],
           quantity: parseFloat(row[3]),
           date: row[4],
           reason: row[5]
         }));
-
-        res.status(200).json(movements);
+    
+        // Filter by itemId if provided
+        const filteredMovements = itemId ? 
+          movements.filter(m => m.itemId === itemId) : 
+          movements;
+    
+        res.status(200).json(filteredMovements);
+      } catch (error) {
+        console.error('Error fetching movements:', error);
+        res.status(500).json({ error: error.message });
       }
     }
 

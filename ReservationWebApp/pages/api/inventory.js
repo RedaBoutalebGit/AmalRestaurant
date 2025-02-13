@@ -49,7 +49,8 @@ export default async function handler(req, res) {
         minThreshold: parseFloat(row[6]),
         lastUpdated: row[7],
         supplier: row[8],
-        notes: row[9]
+        notes: row[9],
+        expiryDate: row[10]
       }));
 
       res.status(200).json(inventory);
@@ -62,7 +63,7 @@ export default async function handler(req, res) {
 
       await sheets.spreadsheets.values.append({
         spreadsheetId: process.env.SHEET_ID,
-        range: 'Inventory!A:J',
+        range: 'Inventory!A:K',
         valueInputOption: 'USER_ENTERED',
         requestBody: {
           values: [[
@@ -75,7 +76,8 @@ export default async function handler(req, res) {
             minThreshold,
             new Date().toISOString(),
             supplier,
-            notes
+            notes,
+            expiryDate
           ]]
         }
       });
