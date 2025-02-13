@@ -48,7 +48,7 @@ export default async function handler(req, res) {
       
       await sheets.spreadsheets.values.append({
         spreadsheetId: process.env.SHEET_ID,
-        range: 'Inventory!A2:L', // Extended range to include all fields
+        range: 'Inventory!A:L', // Extended range to include all fields
         valueInputOption: 'USER_ENTERED',
         requestBody: {
           values: [[
@@ -73,7 +73,7 @@ export default async function handler(req, res) {
     } else if (req.method === 'GET') {
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: process.env.SHEET_ID,
-        range: 'Inventory!A2:L', // Extended range to include all fields
+        range: 'Inventory!A:L', // Extended range to include all fields
       });
 
       const rows = response.data.values || [];
@@ -100,7 +100,7 @@ export default async function handler(req, res) {
 
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: process.env.SHEET_ID,
-        range: 'Inventory!A2:L',
+        range: 'Inventory!A:L',
       });
 
       const rows = response.data.values || [];
@@ -141,7 +141,7 @@ export default async function handler(req, res) {
 
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: process.env.SHEET_ID,
-        range: 'Inventory!A2:L',
+        range: 'Inventory!A:L',
       });
 
       const rows = response.data.values || [];

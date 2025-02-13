@@ -26,7 +26,7 @@ export default async function handler(req, res) {
 
     if (req.method === 'POST') {
       const { itemId, type, quantity, reason, date = new Date().toISOString() } = req.body;
-
+    
       // First, log the movement
       await sheets.spreadsheets.values.append({
         spreadsheetId: process.env.SHEET_ID,
@@ -43,33 +43,40 @@ export default async function handler(req, res) {
           ]]
         }
       });
-
+    
       // Then update the inventory quantity
       const inventory = await sheets.spreadsheets.values.get({
         spreadsheetId: process.env.SHEET_ID,
-        range: 'Inventory!A:L',
+        range: 'Inventory!A:E', // Just get what we need
       });
-
+    
       const rows = inventory.data.values || [];
       const rowIndex = rows.findIndex(row => row[0] === itemId);
       
       if (rowIndex !== -1) {
-        const currentQuantity = parseFloat(rows[rowIndex][4]); // Column E (index 4) is quantity
+        // Get current quantity - make sure to use the correct column index
+        // If quantity is in column E, it's index 4
+        const currentQuantity = parseFloat(rows[rowIndex][4]) || 0;
+        
+        // Calculate new quantity
         const newQuantity = type === 'IN' ? 
           currentQuantity + parseFloat(quantity) : 
           currentQuantity - parseFloat(quantity);
-
-        // Update quantity in column E
+    
+        console.log('Current Quantity:', currentQuantity);
+        console.log('Change Amount:', parseFloat(quantity));
+        console.log('New Quantity:', newQuantity);
+    
+        // Update quantity in the correct column (E)
         await sheets.spreadsheets.values.update({
           spreadsheetId: process.env.SHEET_ID,
-          range: `Inventory!E${rowIndex + 2}`,
-          valueInputOption: 'USER_ENTERED',
+          range: `Inventory!E${rowIndex + 2}`, // Column E
+          valueInputOption: 'RAW',  // Changed to RAW for numerical values
           requestBody: {
             values: [[newQuantity]]
           }
         });
-
-        // Return the success response with the new quantity
+    
         res.status(200).json({ 
           message: 'Movement recorded successfully',
           newQuantity: newQuantity
@@ -77,7 +84,6 @@ export default async function handler(req, res) {
       } else {
         res.status(404).json({ error: 'Item not found' });
       }
-
     } else if (req.method === 'GET') {
       const { itemId } = req.query;
       
