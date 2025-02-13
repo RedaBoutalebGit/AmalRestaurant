@@ -2,10 +2,10 @@
 import { useState, useEffect } from 'react';
 import ReservationEntry from '../components/ReservationEntry';
 import ReservationDashboard from '../components/ReservationDashboard';
-import InventoryDashboard from '../components/InventoryDashboard';
 import Notifications from '../components/Notification';
-import Image from 'next/image'; // Import Image component for Next.js
-import logo from '../public/logo.png'; // Adjust path based on where your logo is stored
+import Image from 'next/image';
+import logo from '../public/logo.png';
+import Link from 'next/link';
 
 export default function Home() {
   const [view, setView] = useState('dashboard');
@@ -81,73 +81,60 @@ export default function Home() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-100">
-      <Notifications reservations={reservations} />
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-2 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <Image src={logo} alt="Restaurant Logo" width={100} height={100} />
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setView('dashboard')}
-                className={`px-4 py-2 rounded-md text-sm font-medium ${
-                  view === 'dashboard'
-                    ? 'bg-[#e3902b] text-white'
-                    : 'text-gray-700 hover:bg-[#ffdbb0]'
-                }`}
-              >
-                Reservations
-              </button>
-              <button
-                onClick={() => setView('entry')}
-                className={`px-4 py-2 rounded-md text-sm font-medium ${
-                  view === 'entry'
-                    ? 'bg-[#e3902b] text-white'
-                    : 'text-gray-700 hover:bg-[#ffdbb0]'
-                }`}
-              >
-                New Reservation
-              </button>
-              <button
-                onClick={() => setView('inventory')}
-                className={`px-4 py-2 rounded-md text-sm font-medium ${
-                  view === 'inventory'
-                    ? 'bg-[#e3902b] text-white'
-                    : 'text-gray-700 hover:bg-[#ffdbb0]'
-                }`}
-              >
-                Inventory
-              </button>
-            </div>
+  return (<div className="min-h-screen bg-gray-100">
+    <Notifications reservations={reservations} />
+    <nav className="bg-white shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 py-2 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center space-x-3">
+            <Image src={logo} alt="Restaurant Logo" width={100} height={100} />
+          </div>
+          <div className="flex items-center space-x-4">
+            <Link
+              href="/"
+              className="px-4 py-2 rounded-md text-sm font-medium bg-[#e3902b] text-white"
+            >
+              Reservations
+            </Link>
+            <Link
+              href="/inventory"
+              className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-[#ffdbb0]"
+            >
+              Inventory
+            </Link>
+            <button
+              onClick={() => setView('entry')}
+              className={`px-4 py-2 rounded-md text-sm font-medium ${
+                view === 'entry'
+                  ? 'bg-[#e3902b] text-white'
+                  : 'text-gray-700 hover:bg-[#ffdbb0]'
+              }`}
+            >
+              New Reservation
+            </button>
           </div>
         </div>
-      </nav>
+      </div>
+    </nav>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {view === 'dashboard' && (
-          <ReservationDashboard 
-            reservations={reservations} 
-            onStatusUpdate={fetchReservations}
-          />
-        )}
-        {view === 'entry' && (
-          <ReservationEntry onSubmit={handleNewReservation} />
-        )}
-        {view === 'inventory' && (
-          <InventoryDashboard />
-        )}
-      </main>
+    <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      {view === 'dashboard' ? (
+        <ReservationDashboard 
+          reservations={reservations} 
+          onStatusUpdate={fetchReservations}
+        />
+      ) : (
+        <ReservationEntry onSubmit={handleNewReservation} />
+      )}
+    </main>
 
-      <footer className="bg-white border-t mt-auto">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-gray-500">
-            Last updated: {new Date().toLocaleTimeString()}
-          </p>
-        </div>
-      </footer>
-    </div>
+    <footer className="bg-white border-t mt-auto">
+      <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+        <p className="text-center text-sm text-gray-500">
+          Last updated: {new Date().toLocaleTimeString()}
+        </p>
+      </div>
+    </footer>
+  </div>
   );
 }
