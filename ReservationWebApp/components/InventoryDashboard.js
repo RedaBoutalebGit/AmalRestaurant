@@ -626,6 +626,67 @@ const InventoryDashboard = () => {
                         }}
                         className="text-blue-600 hover:text-blue-900"
                       >
+                        {showMovementHistory[item.id] && (
+  <tr className="bg-gray-50">
+    <td colSpan="6" className="px-6 py-4">
+      <div className="text-sm text-gray-700">
+        <div className="flex justify-between items-center mb-2">
+          <h4 className="font-medium">Movement History for {item.name}</h4>
+          <span className="text-sm text-gray-500">
+            Current Stock: {item.quantity} {item.unit}
+          </span>
+        </div>
+        {movements[item.id] ? (
+          <div className="space-y-2">
+            <table className="min-w-full">
+              <thead>
+                <tr className="text-xs text-gray-500 uppercase">
+                  <th className="px-3 py-2 text-left">Date</th>
+                  <th className="px-3 py-2 text-left">Type</th>
+                  <th className="px-3 py-2 text-left">Quantity</th>
+                  <th className="px-3 py-2 text-left">Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {movements[item.id].map((movement) => (
+                  <tr 
+                    key={movement.id}
+                    className="border-b border-gray-200 last:border-0"
+                  >
+                    <td className="px-3 py-2">
+                      {new Date(movement.date).toLocaleDateString()} 
+                      {new Date(movement.date).toLocaleTimeString()}
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        movement.type === 'IN' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {movement.type}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2">
+                      {movement.type === 'IN' ? '+' : '-'}
+                      {movement.quantity} {item.unit}
+                    </td>
+                    <td className="px-3 py-2 text-gray-600">
+                      {movement.reason}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          </div>
+        )}
+      </div>
+    </td>
+  </tr>
+)}
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
