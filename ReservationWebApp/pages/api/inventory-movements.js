@@ -47,7 +47,7 @@ export default async function handler(req, res) {
       // Then update the inventory quantity
       const inventory = await sheets.spreadsheets.values.get({
         spreadsheetId: process.env.SHEET_ID,
-        range: 'Inventory!A:L', // Get all inventory columns
+        range: 'Inventory!A:L',
       });
 
       const rows = inventory.data.values || [];
@@ -62,18 +62,21 @@ export default async function handler(req, res) {
         // Update quantity in column E
         await sheets.spreadsheets.values.update({
           spreadsheetId: process.env.SHEET_ID,
-          range: `Inventory!E${rowIndex + 2}`, // Column E for quantity
+          range: `Inventory!E${rowIndex + 2}`,
           valueInputOption: 'USER_ENTERED',
           requestBody: {
             values: [[newQuantity]]
           }
         });
-      }
 
-      res.status(200).json({ 
-        message: 'Movement recorded successfully',
-        newQuantity: newQuantity
-      });
+        // Return the success response with the new quantity
+        res.status(200).json({ 
+          message: 'Movement recorded successfully',
+          newQuantity: newQuantity
+        });
+      } else {
+        res.status(404).json({ error: 'Item not found' });
+      }
 
     } else if (req.method === 'GET') {
       const { itemId } = req.query;
@@ -82,12 +85,12 @@ export default async function handler(req, res) {
         // Get inventory data for item names
         const inventoryResponse = await sheets.spreadsheets.values.get({
           spreadsheetId: process.env.SHEET_ID,
-          range: 'Inventory!A:B', // Get ID and Name columns
+          range: 'Inventory!A:B',
         });
         
         const inventoryMap = {};
         inventoryResponse.data.values?.forEach(row => {
-          inventoryMap[row[0]] = row[1]; // Map ID to Name
+          inventoryMap[row[0]] = row[1];
         });
     
         // Get movements
@@ -107,7 +110,7 @@ export default async function handler(req, res) {
             date: row[4],
             reason: row[5]
           }))
-          .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date, newest first
+          .sort((a, b) => new Date(b.date) - new Date(a.date));
     
         // Filter by itemId if provided
         const filteredMovements = itemId ? 
