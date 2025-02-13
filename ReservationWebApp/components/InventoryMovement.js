@@ -1,3 +1,4 @@
+// components/InventoryMovement.js
 import React, { useState } from 'react';
 import { Plus, Minus } from 'lucide-react';
 
@@ -20,12 +21,15 @@ const InventoryMovement = ({ item, onMovement }) => {
         credentials: 'include',
         body: JSON.stringify({
           itemId: item.id,
-          ...movement
+          type: movement.type,
+          quantity: parseFloat(movement.quantity),
+          reason: movement.reason,
+          currentQuantity: item.quantity // Add current quantity
         }),
       });
 
       if (response.ok) {
-        onMovement();
+        await onMovement();
         setShowModal(false);
         setMovement({ type: 'IN', quantity: '', reason: '' });
       }
@@ -61,7 +65,7 @@ const InventoryMovement = ({ item, onMovement }) => {
 
       {showModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
             <h3 className="text-lg font-bold mb-4">
               {movement.type === 'IN' ? 'Stock In' : 'Stock Out'}: {item.name}
             </h3>
