@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import ReservationEntry from '../components/ReservationEntry';
 import ReservationDashboard from '../components/ReservationDashboard';
+import InventoryDashboard from '../components/InventoryDashboard';
 import Notifications from '../components/Notification';
 import Image from 'next/image'; // Import Image component for Next.js
 import logo from '../public/logo.png'; // Adjust path based on where your logo is stored
@@ -87,7 +88,6 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 py-2 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              {/* Logo */}
               <Image src={logo} alt="Restaurant Logo" width={100} height={100} />
             </div>
             <div className="flex items-center space-x-4">
@@ -99,7 +99,7 @@ export default function Home() {
                     : 'text-gray-700 hover:bg-[#ffdbb0]'
                 }`}
               >
-                Dashboard
+                Reservations
               </button>
               <button
                 onClick={() => setView('entry')}
@@ -111,19 +111,33 @@ export default function Home() {
               >
                 New Reservation
               </button>
+              <button
+                onClick={() => setView('inventory')}
+                className={`px-4 py-2 rounded-md text-sm font-medium ${
+                  view === 'inventory'
+                    ? 'bg-[#e3902b] text-white'
+                    : 'text-gray-700 hover:bg-[#ffdbb0]'
+                }`}
+              >
+                Inventory
+              </button>
             </div>
           </div>
         </div>
       </nav>
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {view === 'dashboard' ? (
+        {view === 'dashboard' && (
           <ReservationDashboard 
             reservations={reservations} 
             onStatusUpdate={fetchReservations}
           />
-        ) : (
+        )}
+        {view === 'entry' && (
           <ReservationEntry onSubmit={handleNewReservation} />
+        )}
+        {view === 'inventory' && (
+          <InventoryDashboard />
         )}
       </main>
 
