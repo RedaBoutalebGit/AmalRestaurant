@@ -27,6 +27,12 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       const { itemId, type, quantity, reason, date = new Date().toISOString() } = req.body;
     
+      // Ensure quantity is a valid number
+      const movementQty = parseFloat(quantity);
+      if (isNaN(movementQty) || movementQty <= 0) {
+        return res.status(400).json({ error: 'Invalid quantity' });
+      }
+    
       // First, log the movement
       await sheets.spreadsheets.values.append({
         spreadsheetId: process.env.SHEET_ID,
@@ -37,54 +43,54 @@ export default async function handler(req, res) {
             `MOV${Date.now()}`,
             itemId,
             type,
-            quantity,
+            movementQty,
             date,
             reason
           ]]
         }
       });
     
-      // Then update the inventory quantity
-      const inventory = await sheets.spreadsheets.values.get({
+      // Fetch current inventory
+      const inventoryResponse = await sheets.spreadsheets.values.get({
         spreadsheetId: process.env.SHEET_ID,
-        range: 'Inventory!A:E', // Just get what we need
+        range: 'Inventory!A:E', // Adjust column range as needed
       });
     
-      const rows = inventory.data.values || [];
+      const rows = inventoryResponse.data.values || [];
       const rowIndex = rows.findIndex(row => row[0] === itemId);
-      
-      if (rowIndex !== -1) {
-        // Get current quantity - make sure to use the correct column index
-        // If quantity is in column E, it's index 4
-        const currentQuantity = parseFloat(rows[rowIndex][4]) || 0;
-        
-        // Calculate new quantity
-        const newQuantity = type === 'IN' ? 
-          currentQuantity + parseFloat(quantity) : 
-          currentQuantity - parseFloat(quantity);
     
-        console.log('Current Quantity:', currentQuantity);
-        console.log('Change Amount:', parseFloat(quantity));
-        console.log('New Quantity:', newQuantity);
-    
-        // Update quantity in the correct column (E)
-        await sheets.spreadsheets.values.update({
-          spreadsheetId: process.env.SHEET_ID,
-          range: `Inventory!E${rowIndex + 2}`, // Column E
-          valueInputOption: 'RAW',  // Changed to RAW for numerical values
-          requestBody: {
-            values: [[newQuantity]]
-          }
-        });
-    
-        res.status(200).json({ 
-          message: 'Movement recorded successfully',
-          newQuantity: newQuantity
-        });
-      } else {
-        res.status(404).json({ error: 'Item not found' });
+      if (rowIndex === -1) {
+        return res.status(404).json({ error: 'Item not found' });
       }
-    } else if (req.method === 'GET') {
+    
+      // Get current quantity
+      const currentQuantity = parseFloat(rows[rowIndex][4]) || 0;
+      let newQuantity = currentQuantity;
+    
+      if (type === 'IN') {
+        newQuantity += movementQty;
+      } else if (type === 'OUT') {
+        newQuantity -= movementQty;
+    
+        // Prevent stock from going negative
+        if (newQuantity < 0) {
+          return res.status(400).json({ error: 'Insufficient stock' });
+        }
+      }
+    
+      // Update inventory sheet
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: process.env.SHEET_ID,
+        range: `Inventory!E${rowIndex + 1}`, // Assuming column E contains quantity
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+          values: [[newQuantity]]
+        }
+      });
+    
+      res.status(200).json({ message: 'Stock movement recorded successfully', newQuantity });
+    }
+   else if (req.method === 'GET') {
       const { itemId } = req.query;
       
       try {

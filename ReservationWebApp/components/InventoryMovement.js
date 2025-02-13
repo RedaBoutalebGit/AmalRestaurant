@@ -12,31 +12,42 @@ const InventoryMovement = ({ item, onMovement }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+  
+    const quantityValue = parseFloat(movement.quantity);
+    if (isNaN(quantityValue) || quantityValue <= 0) {
+      alert('Please enter a valid quantity.');
+      return;
+    }
+  
     try {
       const response = await fetch('/api/inventory-movements', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
           itemId: item.id,
           type: movement.type,
-          quantity: parseFloat(movement.quantity),
+          quantity: quantityValue,
           reason: movement.reason,
-          currentQuantity: item.quantity // Add current quantity
+          currentQuantity: item.quantity
         }),
       });
-
+  
       if (response.ok) {
+        const result = await response.json();
+        item.quantity = result.newQuantity; // Update stock in UI
         await onMovement();
         setShowModal(false);
         setMovement({ type: 'IN', quantity: '', reason: '' });
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error);
       }
     } catch (error) {
       console.error('Error recording movement:', error);
     }
   };
+  
 
   return (
     <>
