@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, AlertTriangle, ChevronDown, ChevronUp, Plus as PlusIcon, Minus as MinusIcon } from 'lucide-react';
+import { Edit, Trash2, AlertTriangle, ChevronDown, ChevronUp, Plus as PlusIcon, Minus as MinusIcon } from 'lucide-react';
 import InventoryMovement from './InventoryMovement';
 
 const categories = {
@@ -55,8 +55,8 @@ const storageLocations = {
   frontOfHouse: "Front of House",
   bar: "Bar Area"
 };
-
 const InventoryDashboard = () => {
+  // States
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -85,10 +85,7 @@ const InventoryDashboard = () => {
     expiryDate: ''
   });
 
-  useEffect(() => {
-    fetchInventory();
-  }, []);
-
+  // Utility Functions
   const getExpiryStatus = (expiryDate) => {
     if (!expiryDate) return 'no-expiry';
     
@@ -101,6 +98,7 @@ const InventoryDashboard = () => {
     return 'valid';
   };
 
+  // API Functions
   const fetchInventory = async () => {
     try {
       const response = await fetch('/api/inventory', {
@@ -127,102 +125,12 @@ const InventoryDashboard = () => {
     }
   };
 
-  const handleAddItem = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch('/api/inventory', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(itemForm),
-      });
+  // Initial Load
+  useEffect(() => {
+    fetchInventory();
+  }, []);
 
-      if (response.ok) {
-        setShowAddModal(false);
-        setItemForm({
-          name: '',
-          category: '',
-          subcategory: '',
-          quantity: 0,
-          unit: '',
-          costPerUnit: 0,
-          minThreshold: 0,
-          supplier: '',
-          notes: '',
-          storageLocation: '',
-          expiryDate: ''
-        });
-        fetchInventory();
-      }
-    } catch (error) {
-      console.error('Error adding item:', error);
-    }
-  };
-
-  const handleEditItem = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch(`/api/inventory?id=${selectedItem.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(itemForm),
-      });
-
-      if (response.ok) {
-        setShowEditModal(false);
-        setSelectedItem(null);
-        setItemForm({
-          name: '',
-          category: '',
-          subcategory: '',
-          quantity: 0,
-          unit: '',
-          costPerUnit: 0,
-          minThreshold: 0,
-          supplier: '',
-          notes: '',
-          storageLocation: '',
-          expiryDate: ''
-        });
-        fetchInventory();
-      }
-    } catch (error) {
-      console.error('Error updating item:', error);
-    }
-  };
-
-  const handleDeleteItem = async () => {
-    try {
-      const response = await fetch(`/api/inventory?id=${selectedItem.id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        setShowDeleteModal(false);
-        setSelectedItem(null);
-        fetchInventory();
-      }
-    } catch (error) {
-      console.error('Error deleting item:', error);
-    }
-  };
-
-  const toggleMovementHistory = (itemId) => {
-    if (!movements[itemId]) {
-      fetchMovements(itemId);
-    }
-    setShowMovementHistory(prev => ({
-      ...prev,
-      [itemId]: !prev[itemId]
-    }));
-  };
-
+  // Filter Function
   const filteredInventory = inventory.filter(item => {
     const categoryMatch = filterCategory === 'all' || item.category === filterCategory;
     const subcategoryMatch = filterSubcategory === 'all' || item.subcategory === filterSubcategory;
@@ -233,133 +141,234 @@ const InventoryDashboard = () => {
     return categoryMatch && subcategoryMatch && searchMatch && expiryMatch;
   });
 
-  const ExpiryNotifications = ({ inventory }) => {
-    const expiringItems = inventory.filter(item => {
-      if (!item.expiryDate) return false;
-      const status = getExpiryStatus(item.expiryDate);
-      return status === 'expired' || status === 'expiring-soon';
+
+// Handler Functions
+const handleAddItem = async (e) => {
+  e.preventDefault();
+  try {
+    const response = await fetch('/api/inventory', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(itemForm),
     });
 
-    if (expiringItems.length === 0) return null;
+    if (response.ok) {
+      setShowAddModal(false);
+      setItemForm({
+        name: '',
+        category: '',
+        subcategory: '',
+        quantity: 0,
+        unit: '',
+        costPerUnit: 0,
+        minThreshold: 0,
+        supplier: '',
+        notes: '',
+        storageLocation: '',
+        expiryDate: ''
+      });
+      fetchInventory();
+    }
+  } catch (error) {
+    console.error('Error adding item:', error);
+  }
+};
 
-    return (
-      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <AlertTriangle className="h-5 w-5 text-yellow-400" />
-          </div>
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-yellow-800">
-              Expiry Alerts
-            </h3>
-            <div className="mt-2 text-sm text-yellow-700">
-              <ul className="list-disc pl-5 space-y-1">
-                {expiringItems.map(item => (
-                  <li key={item.id}>
-                    {item.name} - {
-                      getExpiryStatus(item.expiryDate) === 'expired' 
-                        ? 'EXPIRED' 
-                        : `Expires in ${Math.ceil((new Date(item.expiryDate) - new Date()) / (1000 * 60 * 60 * 24))} days`
-                    }
-                  </li>
-                ))}
-              </ul>
-            </div>
+const handleEditItem = async (e) => {
+  e.preventDefault();
+  try {
+    const response = await fetch(`/api/inventory?id=${selectedItem.id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(itemForm),
+    });
+
+    if (response.ok) {
+      setShowEditModal(false);
+      setSelectedItem(null);
+      setItemForm({
+        name: '',
+        category: '',
+        subcategory: '',
+        quantity: 0,
+        unit: '',
+        costPerUnit: 0,
+        minThreshold: 0,
+        supplier: '',
+        notes: '',
+        storageLocation: '',
+        expiryDate: ''
+      });
+      fetchInventory();
+    }
+  } catch (error) {
+    console.error('Error updating item:', error);
+  }
+};
+
+const handleDeleteItem = async () => {
+  try {
+    const response = await fetch(`/api/inventory?id=${selectedItem.id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+
+    if (response.ok) {
+      setShowDeleteModal(false);
+      setSelectedItem(null);
+      fetchInventory();
+    }
+  } catch (error) {
+    console.error('Error deleting item:', error);
+  }
+};
+
+const toggleMovementHistory = (itemId) => {
+  if (!movements[itemId]) {
+    fetchMovements(itemId);
+  }
+  setShowMovementHistory(prev => ({
+    ...prev,
+    [itemId]: !prev[itemId]
+  }));
+};
+
+
+
+// ExpiryNotifications Component
+const ExpiryNotifications = ({ inventory }) => {
+  const expiringItems = inventory.filter(item => {
+    if (!item.expiryDate) return false;
+    const status = getExpiryStatus(item.expiryDate);
+    return status === 'expired' || status === 'expiring-soon';
+  });
+
+  if (expiringItems.length === 0) return null;
+
+  return (
+    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+      <div className="flex">
+        <div className="flex-shrink-0">
+          <AlertTriangle className="h-5 w-5 text-yellow-400" />
+        </div>
+        <div className="ml-3">
+          <h3 className="text-sm font-medium text-yellow-800">
+            Expiry Alerts
+          </h3>
+          <div className="mt-2 text-sm text-yellow-700">
+            <ul className="list-disc pl-5 space-y-1">
+              {expiringItems.map(item => (
+                <li key={item.id}>
+                  {item.name} - {
+                    getExpiryStatus(item.expiryDate) === 'expired' 
+                      ? 'EXPIRED' 
+                      : `Expires in ${Math.ceil((new Date(item.expiryDate) - new Date()) / (1000 * 60 * 60 * 24))} days`
+                  }
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
-  const ItemForm = ({ onSubmit, initialData = null }) => {
-    const [hasExpiry, setHasExpiry] = useState(initialData?.expiryDate ? true : false);
-  
-    return (
-      <form onSubmit={onSubmit} className="space-y-4">
+// ItemForm Component
+const ItemForm = ({ onSubmit, initialData = null }) => {
+  const [hasExpiry, setHasExpiry] = useState(initialData?.expiryDate ? true : false);
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Name</label>
+        <input
+          type="text"
+          value={itemForm.name}
+          onChange={(e) => setItemForm({...itemForm, name: e.target.value})}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          required
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Name</label>
-          <input
-            type="text"
-            value={itemForm.name}
-            onChange={(e) => setItemForm({...itemForm, name: e.target.value})}
+          <label className="block text-sm font-medium text-gray-700">Category</label>
+          <select
+            value={itemForm.category}
+            onChange={(e) => {
+              setItemForm({
+                ...itemForm,
+                category: e.target.value,
+                subcategory: '',
+                unit: ''
+              });
+            }}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             required
-          />
+          >
+            <option value="">Select Category</option>
+            {Object.entries(categories).map(([key, cat]) => (
+              <option key={key} value={key}>{cat.name}</option>
+            ))}
+          </select>
         </div>
-  
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Category</label>
-            <select
-              value={itemForm.category}
-              onChange={(e) => {
-                setItemForm({
-                  ...itemForm,
-                  category: e.target.value,
-                  subcategory: '',
-                  unit: ''
-                });
-              }}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-            >
-              <option value="">Select Category</option>
-              {Object.entries(categories).map(([key, cat]) => (
-                <option key={key} value={key}>{cat.name}</option>
-              ))}
-            </select>
-          </div>
-  
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Subcategory</label>
-            <select
-              value={itemForm.subcategory}
-              onChange={(e) => setItemForm({...itemForm, subcategory: e.target.value})}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              disabled={!itemForm.category}
-              required
-            >
-              <option value="">Select Subcategory</option>
-              {itemForm.category && categories[itemForm.category].subcategories.map(sub => (
-                <option key={sub} value={sub}>{sub}</option>
-              ))}
-            </select>
-          </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Subcategory</label>
+          <select
+            value={itemForm.subcategory}
+            onChange={(e) => setItemForm({...itemForm, subcategory: e.target.value})}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            disabled={!itemForm.category}
+            required
+          >
+            <option value="">Select Subcategory</option>
+            {itemForm.category && categories[itemForm.category].subcategories.map(sub => (
+              <option key={sub} value={sub}>{sub}</option>
+            ))}
+          </select>
         </div>
-  
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Unit</label>
-            <select
-              value={itemForm.unit}
-              onChange={(e) => setItemForm({...itemForm, unit: e.target.value})}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-            >
-              <option value="">Select Unit</option>
-              {itemForm.category && unitsByCategory[itemForm.category].map(unit => (
-                <option key={unit} value={unit}>{unit}</option>
-              ))}
-            </select>
-          </div>
-  
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Storage Location</label>
-            <select
-              value={itemForm.storageLocation}
-              onChange={(e) => setItemForm({...itemForm, storageLocation: e.target.value})}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-            >
-              <option value="">Select Location</option>
-              {Object.entries(storageLocations).map(([key, location]) => (
-                <option key={key} value={key}>{location}</option>
-              ))}
-            </select>
-          </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Unit</label>
+          <select
+            value={itemForm.unit}
+            onChange={(e) => setItemForm({...itemForm, unit: e.target.value})}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            required
+          >
+            <option value="">Select Unit</option>
+            {itemForm.category && unitsByCategory[itemForm.category].map(unit => (
+              <option key={unit} value={unit}>{unit}</option>
+            ))}
+          </select>
         </div>
-  
-        <div className="grid grid-cols-2 gap-4">
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Storage Location</label>
+          <select
+            value={itemForm.storageLocation}
+            onChange={(e) => setItemForm({...itemForm, storageLocation: e.target.value})}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            required
+          >
+            <option value="">Select Location</option>
+            {Object.entries(storageLocations).map(([key, location]) => (
+              <option key={key} value={key}>{location}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Cost per Unit</label>
             <input
@@ -383,7 +392,7 @@ const InventoryDashboard = () => {
             />
           </div>
         </div>
-  
+
         <div>
           <label className="block text-sm font-medium text-gray-700">Supplier</label>
           <input
@@ -393,7 +402,7 @@ const InventoryDashboard = () => {
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
-  
+
         <div className="flex items-center mb-4">
           <input
             type="checkbox"
@@ -406,7 +415,7 @@ const InventoryDashboard = () => {
             This item has an expiry date
           </label>
         </div>
-  
+
         {hasExpiry && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Expiry Date</label>
@@ -418,7 +427,7 @@ const InventoryDashboard = () => {
             />
           </div>
         )}
-  
+
         <div>
           <label className="block text-sm font-medium text-gray-700">Notes</label>
           <textarea
@@ -428,7 +437,7 @@ const InventoryDashboard = () => {
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
-  
+
         <div className="flex justify-end space-x-4">
           <button
             type="button"
@@ -450,6 +459,21 @@ const InventoryDashboard = () => {
       </form>
     );
   };
+
+
+  // Loading State
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading inventory...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Main Render
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
       {showExpiryWarning && <ExpiryNotifications inventory={inventory} />}
@@ -521,7 +545,6 @@ const InventoryDashboard = () => {
           </div>
         </div>
       </div>
-
       {/* Main Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full">
@@ -573,7 +596,14 @@ const InventoryDashboard = () => {
                   </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      item.category === 'Food' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                      item.category === 'dryGoods' ? 'bg-green-100 text-green-800' : 
+                      item.category === 'freshProduce' ? 'bg-emerald-100 text-emerald-800' :
+                      item.category === 'proteins' ? 'bg-red-100 text-red-800' :
+                      item.category === 'dairyAndCold' ? 'bg-blue-100 text-blue-800' :
+                      item.category === 'beverages' ? 'bg-purple-100 text-purple-800' :
+                      item.category === 'saucesAndCondiments' ? 'bg-yellow-100 text-yellow-800' :
+                      item.category === 'frozenItems' ? 'bg-indigo-100 text-indigo-800' :
+                      'bg-gray-100 text-gray-800'
                     }`}>
                       {categories[item.category]?.name}
                     </span>
@@ -592,6 +622,14 @@ const InventoryDashboard = () => {
                         'text-green-600'
                       }`}>
                         {new Date(item.expiryDate).toLocaleDateString()}
+                        {getExpiryStatus(item.expiryDate) === 'expired' && 
+                          <div className="text-red-600 font-medium">(EXPIRED)</div>
+                        }
+                        {getExpiryStatus(item.expiryDate) === 'expiring-soon' && 
+                          <div className="text-yellow-600 font-medium">
+                            ({Math.ceil((new Date(item.expiryDate) - new Date()) / (1000 * 60 * 60 * 24))} days)
+                          </div>
+                        }
                       </div>
                     )}
                   </td>
@@ -626,7 +664,6 @@ const InventoryDashboard = () => {
                         }}
                         className="text-blue-600 hover:text-blue-900"
                       >
-                        
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
@@ -638,9 +675,80 @@ const InventoryDashboard = () => {
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
+                      <button
+                        onClick={() => toggleMovementHistory(item.id)}
+                        className="text-gray-600 hover:text-gray-900"
+                      >
+                        {showMovementHistory[item.id] ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )}
+                      </button>
                     </div>
                   </td>
                 </tr>
+                {showMovementHistory[item.id] && (
+                  <tr className="bg-gray-50">
+                    <td colSpan="6" className="px-6 py-4">
+                      <div className="text-sm text-gray-700">
+                        <div className="flex justify-between items-center mb-2">
+                          <h4 className="font-medium">Movement History for {item.name}</h4>
+                          <span className="text-sm text-gray-500">
+                            Current Stock: {item.quantity} {item.unit}
+                          </span>
+                        </div>
+                        {movements[item.id] ? (
+                          <div className="space-y-2">
+                            <table className="min-w-full">
+                              <thead>
+                                <tr className="text-xs text-gray-500 uppercase">
+                                  <th className="px-3 py-2 text-left">Date</th>
+                                  <th className="px-3 py-2 text-left">Type</th>
+                                  <th className="px-3 py-2 text-left">Quantity</th>
+                                  <th className="px-3 py-2 text-left">Reason</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {movements[item.id].map((movement) => (
+                                  <tr 
+                                    key={movement.id}
+                                    className="border-b border-gray-200 last:border-0"
+                                  >
+                                    <td className="px-3 py-2">
+                                      {new Date(movement.date).toLocaleDateString()} 
+                                      {new Date(movement.date).toLocaleTimeString()}
+                                    </td>
+                                    <td className="px-3 py-2">
+                                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                        movement.type === 'IN' 
+                                          ? 'bg-green-100 text-green-800' 
+                                          : 'bg-red-100 text-red-800'
+                                      }`}>
+                                        {movement.type}
+                                      </span>
+                                    </td>
+                                    <td className="px-3 py-2">
+                                      {movement.type === 'IN' ? '+' : '-'}
+                                      {movement.quantity} {item.unit}
+                                    </td>
+                                    <td className="px-3 py-2 text-gray-600">
+                                      {movement.reason}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <div className="text-center py-4">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </React.Fragment>
             ))}
           </tbody>
