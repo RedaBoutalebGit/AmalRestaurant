@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Trash2, AlertTriangle, ChevronDown, ChevronUp, Plus as PlusIcon, Minus as MinusIcon } from 'lucide-react';
+import { Plus, Edit, Trash2, AlertTriangle, ChevronDown, ChevronUp, Plus as PlusIcon, Minus as MinusIcon } from 'lucide-react';
 import InventoryMovement from './InventoryMovement';
 
 const categories = {
