@@ -4,32 +4,32 @@ import InventoryMovement from './InventoryMovement';
 
 const categories = {
   dryGoods: {
-    name: "Dry Goods",
-    subcategories: ["Grains", "Pasta", "Flour", "Spices", "Dried Herbs", "Legumes"]
+    name: "Dry Goods-البضائع الجافة",
+    subcategories: ["Grains-الحبوب", "Pasta", "Flour-الطحين", "Spices-توابل", "Dried Herbs-الأعشاب", "Legumes-القطنيات"]
   },
   freshProduce: {
-    name: "Fresh Produce",
-    subcategories: ["Vegetables", "Fruits", "Fresh Herbs", "Salad Greens"]
+    name: "Fresh Produce-المنتجات الطازجة",
+    subcategories: ["Vegetables-الخضار", "Fruits-الفواكه", "Fresh Herbs-الأعشاب الطازجة", "Salad Greens-السلطة"]
   },
   proteins: {
     name: "Proteins",
-    subcategories: ["Meat", "Poultry", "Fish & Seafood", "Eggs", "Plant-based"]
+    subcategories: ["Meat-اللحوم", "Poultry-الدواجن", "Fish & Seafood-الأسماك ", "Eggs-البيض"]
   },
   dairyAndCold: {
-    name: "Dairy & Cold Items",
-    subcategories: ["Milk", "Cheese", "Butter", "Yogurt", "Cream"]
+    name: "Dairy & Cold Items-منتوجات الحليب",
+    subcategories: ["Milk-حليب", "Cheese-جبنة", "Butter-زبدة", "Yogurt", "Cream-كريمة"]
   },
   beverages: {
-    name: "Beverages",
-    subcategories: ["Water", "Soft Drinks", "Juices", "Hot Beverages"]
+    name: "Beverages-المشروبات",
+    subcategories: ["Water-ماء", "Soft Drinks-مشروبات غازية", "Juices-عصائر"]
   },
   saucesAndCondiments: {
-    name: "Sauces & Condiments",
-    subcategories: ["Cooking Sauces", "Table Sauces", "Dressings", "Oils", "Vinegars"]
+    name: "Sauces & Condiments-الصلصات",
+    subcategories: ["Cooking Sauces-صلصات الطبخ", "Table Sauces-صلصات ", "Dressings-التوابل", "Oils-الزيوت", "Vinegars-الخل"]
   },
   frozenItems: {
-    name: "Frozen Items",
-    subcategories: ["Frozen Vegetables", "Frozen Meat", "Ice Cream", "Other"]
+    name: "Frozen Items-العناصر المجمدة",
+    subcategories: ["Frozen Vegetables-خضروات مجمدة", "Frozen Meat-لحوم مجمدة", "Ice Cream-آيس كريم", "Other"]
   },
   disposables: {
     name: "Disposables & Packaging",
@@ -39,7 +39,7 @@ const categories = {
 
 const unitsByCategory = {
   dryGoods: ["kg", "g", "box", "packet"],
-  freshProduce: ["kg", "g", "piece", "bunch"],
+  freshProduce: ["kg", "g", "piece"],
   proteins: ["kg", "g", "piece"],
   dairyAndCold: ["l", "ml", "kg", "piece"],
   beverages: ["l", "ml", "bottle", "can"],
@@ -49,10 +49,9 @@ const unitsByCategory = {
 };
 
 const storageLocations = {
-  dryStorage: "Dry Storage Room",
-  coolRoom: "Cool Room",
+  dryStorage: "Dry Storage Room -غرفة التخزين الجاف ",
+  coolRoom: "Cool Room-غرفة باردة",
   freezer: "Freezer",
-  frontOfHouse: "Front of House",
   bar: "Bar Area"
 };
 const InventoryDashboard = () => {
@@ -579,7 +578,7 @@ const ItemForm = ({ onSubmit, initialData = null }) => {
                       <div>
                         <div className="text-sm font-medium text-gray-900">{item.name}</div>
                         <div className="text-sm text-gray-500">{item.supplier}</div>
-                        <div className="text-sm text-gray-500">Cost: ${item.costPerUnit}/{item.unit}</div>
+                        <div className="text-sm text-gray-500">Cost: Dhs{item.costPerUnit}/{item.unit}</div>
                       </div>
                     </div>
                   </td>
