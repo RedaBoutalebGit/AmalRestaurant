@@ -142,7 +142,7 @@ const InventoryDashboard = () => {
 
 
 // Handler Functions
-const handleAddItem = async (e) => {
+const handleAddItem = async (e, formData) => {
   e.preventDefault();
   try {
     const response = await fetch('/api/inventory', {
@@ -151,24 +151,11 @@ const handleAddItem = async (e) => {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
-      body: JSON.stringify(itemForm),
+      body: JSON.stringify(formData), // Use the passed formData
     });
 
     if (response.ok) {
       setShowAddModal(false);
-      setItemForm({
-        name: '',
-        category: '',
-        subcategory: '',
-        quantity: 0,
-        unit: '',
-        costPerUnit: 0,
-        minThreshold: 0,
-        supplier: '',
-        notes: '',
-        storageLocation: '',
-        expiryDate: ''
-      });
       fetchInventory();
     }
   } catch (error) {
@@ -176,7 +163,7 @@ const handleAddItem = async (e) => {
   }
 };
 
-const handleEditItem = async (e) => {
+const handleEditItem = async (e, formData) => {
   e.preventDefault();
   try {
     const response = await fetch(`/api/inventory?id=${selectedItem.id}`, {
@@ -185,25 +172,12 @@ const handleEditItem = async (e) => {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
-      body: JSON.stringify(itemForm),
+      body: JSON.stringify(formData), // Use the passed formData
     });
 
     if (response.ok) {
       setShowEditModal(false);
       setSelectedItem(null);
-      setItemForm({
-        name: '',
-        category: '',
-        subcategory: '',
-        quantity: 0,
-        unit: '',
-        costPerUnit: 0,
-        minThreshold: 0,
-        supplier: '',
-        notes: '',
-        storageLocation: '',
-        expiryDate: ''
-      });
       fetchInventory();
     }
   } catch (error) {
@@ -281,16 +255,35 @@ const ExpiryNotifications = ({ inventory }) => {
 
 // ItemForm Component
 const ItemForm = ({ onSubmit, initialData = null }) => {
+  const [localForm, setLocalForm] = useState({
+    name: initialData?.name || '',
+    category: initialData?.category || '',
+    subcategory: initialData?.subcategory || '',
+    quantity: initialData?.quantity || 0,
+    unit: initialData?.unit || '',
+    costPerUnit: initialData?.costPerUnit || 0,
+    minThreshold: initialData?.minThreshold || 0,
+    supplier: initialData?.supplier || '',
+    notes: initialData?.notes || '',
+    storageLocation: initialData?.storageLocation || '',
+    expiryDate: initialData?.expiryDate || ''
+  });
+  
   const [hasExpiry, setHasExpiry] = useState(initialData?.expiryDate ? true : false);
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(e, localForm);
+  };
+
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-gray-700">Name</label>
         <input
           type="text"
-          value={itemForm.name}
-          onChange={(e) => setItemForm({...itemForm, name: e.target.value})}
+          value={localForm.name}
+          onChange={(e) => setLocalForm(prev => ({ ...prev, name: e.target.value }))}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           required
         />
@@ -300,14 +293,14 @@ const ItemForm = ({ onSubmit, initialData = null }) => {
         <div>
           <label className="block text-sm font-medium text-gray-700">Category</label>
           <select
-            value={itemForm.category}
+            value={localForm.category}
             onChange={(e) => {
-              setItemForm({
-                ...itemForm,
+              setLocalForm(prev => ({
+                ...prev,
                 category: e.target.value,
                 subcategory: '',
                 unit: ''
-              });
+              }));
             }}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             required
@@ -322,14 +315,14 @@ const ItemForm = ({ onSubmit, initialData = null }) => {
         <div>
           <label className="block text-sm font-medium text-gray-700">Subcategory</label>
           <select
-            value={itemForm.subcategory}
-            onChange={(e) => setItemForm({...itemForm, subcategory: e.target.value})}
+            value={localForm.subcategory}
+            onChange={(e) => setLocalForm(prev => ({ ...prev, subcategory: e.target.value }))}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            disabled={!itemForm.category}
+            disabled={!localForm.category}
             required
           >
             <option value="">Select Subcategory</option>
-            {itemForm.category && categories[itemForm.category].subcategories.map(sub => (
+            {localForm.category && categories[localForm.category].subcategories.map(sub => (
               <option key={sub} value={sub}>{sub}</option>
             ))}
           </select>
@@ -340,13 +333,13 @@ const ItemForm = ({ onSubmit, initialData = null }) => {
         <div>
           <label className="block text-sm font-medium text-gray-700">Unit</label>
           <select
-            value={itemForm.unit}
-            onChange={(e) => setItemForm({...itemForm, unit: e.target.value})}
+            value={localForm.unit}
+            onChange={(e) => setLocalForm(prev => ({ ...prev, unit: e.target.value }))}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             required
           >
             <option value="">Select Unit</option>
-            {itemForm.category && unitsByCategory[itemForm.category].map(unit => (
+            {localForm.category && unitsByCategory[localForm.category].map(unit => (
               <option key={unit} value={unit}>{unit}</option>
             ))}
           </select>
@@ -355,8 +348,8 @@ const ItemForm = ({ onSubmit, initialData = null }) => {
         <div>
           <label className="block text-sm font-medium text-gray-700">Storage Location</label>
           <select
-            value={itemForm.storageLocation}
-            onChange={(e) => setItemForm({...itemForm, storageLocation: e.target.value})}
+            value={localForm.storageLocation}
+            onChange={(e) => setLocalForm(prev => ({ ...prev, storageLocation: e.target.value }))}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             required
           >
@@ -367,97 +360,98 @@ const ItemForm = ({ onSubmit, initialData = null }) => {
           </select>
         </div>
       </div>
+
       <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Cost per Unit</label>
-            <input
-              type="number"
-              step="0.01"
-              value={itemForm.costPerUnit}
-              onChange={(e) => setItemForm({...itemForm, costPerUnit: parseFloat(e.target.value)})}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Min Threshold</label>
-            <input
-              type="number"
-              step="0.01"
-              value={itemForm.minThreshold}
-              onChange={(e) => setItemForm({...itemForm, minThreshold: parseFloat(e.target.value)})}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-            />
-          </div>
-        </div>
-
         <div>
-          <label className="block text-sm font-medium text-gray-700">Supplier</label>
+          <label className="block text-sm font-medium text-gray-700">Cost per Unit</label>
           <input
-            type="text"
-            value={itemForm.supplier}
-            onChange={(e) => setItemForm({...itemForm, supplier: e.target.value})}
+            type="number"
+            step="0.01"
+            value={localForm.costPerUnit}
+            onChange={(e) => setLocalForm(prev => ({ ...prev, costPerUnit: parseFloat(e.target.value) }))}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Min Threshold</label>
+          <input
+            type="number"
+            step="0.01"
+            value={localForm.minThreshold}
+            onChange={(e) => setLocalForm(prev => ({ ...prev, minThreshold: parseFloat(e.target.value) }))}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            required
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Supplier</label>
+        <input
+          type="text"
+          value={localForm.supplier}
+          onChange={(e) => setLocalForm(prev => ({ ...prev, supplier: e.target.value }))}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+        />
+      </div>
+
+      <div className="flex items-center mb-4">
+        <input
+          type="checkbox"
+          id="hasExpiry"
+          checked={hasExpiry}
+          onChange={(e) => setHasExpiry(e.target.checked)}
+          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        />
+        <label htmlFor="hasExpiry" className="ml-2 text-sm text-gray-700">
+          This item has an expiry date
+        </label>
+      </div>
+
+      {hasExpiry && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Expiry Date</label>
+          <input
+            type="date"
+            value={localForm.expiryDate || ''}
+            onChange={(e) => setLocalForm(prev => ({ ...prev, expiryDate: e.target.value }))}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
+      )}
 
-        <div className="flex items-center mb-4">
-          <input
-            type="checkbox"
-            id="hasExpiry"
-            checked={hasExpiry}
-            onChange={(e) => setHasExpiry(e.target.checked)}
-            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-          />
-          <label htmlFor="hasExpiry" className="ml-2 text-sm text-gray-700">
-            This item has an expiry date
-          </label>
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Notes</label>
+        <textarea
+          value={localForm.notes}
+          onChange={(e) => setLocalForm(prev => ({ ...prev, notes: e.target.value }))}
+          rows="3"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+        />
+      </div>
 
-        {hasExpiry && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Expiry Date</label>
-            <input
-              type="date"
-              value={itemForm.expiryDate || ''}
-              onChange={(e) => setItemForm({...itemForm, expiryDate: e.target.value})}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
-        )}
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Notes</label>
-          <textarea
-            value={itemForm.notes}
-            onChange={(e) => setItemForm({...itemForm, notes: e.target.value})}
-            rows="3"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          />
-        </div>
-
-        <div className="flex justify-end space-x-4">
-          <button
-            type="button"
-            onClick={() => {
-              setShowAddModal(false);
-              setShowEditModal(false);
-            }}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            {initialData ? 'Update Item' : 'Add Item'}
-          </button>
-        </div>
-      </form>
-    );
-  };
+      <div className="flex justify-end space-x-4">
+        <button
+          type="button"
+          onClick={() => {
+            setShowAddModal(false);
+            setShowEditModal(false);
+          }}
+          className="px-4 py-2 text-gray-600 hover:text-gray-800"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          {initialData ? 'Update Item' : 'Add Item'}
+        </button>
+      </div>
+    </form>
+  );
+};
 
 
   // Loading State
