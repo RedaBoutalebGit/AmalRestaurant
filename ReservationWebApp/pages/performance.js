@@ -201,16 +201,13 @@ export default function PerformancePage() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div style={styles.container}>
           <div style={styles.header}>
-            <h1 style={styles.title}>Restaurant Performance Analysis</h1>
+            <h1 style={styles.title}>Amal Gueliz Performance Analysis</h1>
             <h2 style={styles.subtitle}>Comparison: 2024 vs 2025</h2>
           </div>
           
           {/* Executive Summary */}
           <div style={styles.section}>
             <h2 style={styles.sectionTitle}>Executive Summary</h2>
-            <p style={styles.paragraph}>
-              Analysis of your restaurant's performance shows significant growth in both January and February 2025 compared to the same months in 2024:
-            </p>
             <ul style={styles.list}>
               <li style={styles.listItem}>Revenue has increased by 21.3% in January and 11.3% in February</li>
               <li style={styles.listItem}>Customer traffic (covers) is up 22.0% in January and 7.4% in February</li>
@@ -327,29 +324,7 @@ export default function PerformancePage() {
           </div>
 
           {/* Insights and Recommendations */}
-          <div style={styles.section}>
-            <h2 style={styles.sectionTitle}>Key Insights & Recommendations</h2>
-            <div style={styles.insights}>
-              <div style={styles.insightCard}>
-                <h3 style={styles.insightCardTitle}>Key Findings</h3>
-                <ul style={styles.list}>
-                  <li style={styles.listItem}>Strong overall growth in both revenue and customer traffic</li>
-                  <li style={styles.listItem}>February shows healthier balanced growth with increased average spend</li>
-                  <li style={styles.listItem}>January shows explosive customer growth but slight decline in average spend</li>
-                  <li style={styles.listItem}>Year-over-year performance shows robust business momentum</li>
-                </ul>
-              </div>
-              <div style={styles.recommendationCard}>
-                <h3 style={styles.recommendationCardTitle}>Recommendations</h3>
-                <ul style={styles.list}>
-                  <li style={styles.listItem}>Analyze January's menu performance to identify opportunities to increase average check</li>
-                  <li style={styles.listItem}>Investigate successful February strategies that led to higher per-customer spending</li>
-                  <li style={styles.listItem}>Consider capacity management planning for continued growth in customer numbers</li>
-                  <li style={styles.listItem}>Build on successful customer acquisition strategies from January</li>
-                </ul>
-              </div>
-            </div>
-          </div>
+
         </div>
       </main>
 
