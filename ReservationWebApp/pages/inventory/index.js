@@ -1,9 +1,11 @@
+// pages/inventory/index.js
 import InventoryDashboard from '../../components/InventoryDashboard';
 import Image from 'next/image';
 import logo from '../../public/logo.png';
 import Link from 'next/link';
+import ProtectedRoute from '../../components/ProtectedRoute';
 
-export default function InventoryPage() {
+function InventoryContent() {
   return (
     <div className="min-h-screen bg-gray-100">
       <nav className="bg-white shadow-sm">
@@ -25,6 +27,12 @@ export default function InventoryPage() {
               >
                 Inventory
               </Link>
+              <Link
+                href="/performance"
+                className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-[#ffdbb0]"
+              >
+                Performance
+              </Link>
             </div>
           </div>
         </div>
@@ -34,5 +42,13 @@ export default function InventoryPage() {
         <InventoryDashboard />
       </main>
     </div>
+  );
+}
+
+export default function InventoryPage() {
+  return (
+    <ProtectedRoute pageName="inventory">
+      <InventoryContent />
+    </ProtectedRoute>
   );
 }
