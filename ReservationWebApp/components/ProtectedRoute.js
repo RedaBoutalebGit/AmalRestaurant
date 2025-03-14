@@ -7,6 +7,7 @@ import { useRouter } from 'next/router';
 const CREDENTIALS = {
   'performance': 'restaurant2025',
   'inventory': 'inventory2025',
+  'recipe': 'recipe2025',
   // Add more page-password pairs as needed
 };
 

@@ -84,38 +84,44 @@ export default function Home() {
   return (<div className="min-h-screen bg-gray-100">
     <Notifications reservations={reservations} />
     <nav className="bg-white shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 py-2 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-3">
-            <Image src={logo} alt="Restaurant Logo" width={100} height={100} />
-          </div>
-          <div className="flex items-center space-x-4">
-            <Link
-              href="/"
-              className="px-4 py-2 rounded-md text-sm font-medium bg-[#e3902b] text-white"
-            >
-              Reservations
-            </Link>
-            <Link
-              href="/inventory"
-              className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-[#ffdbb0]"
-            >
-              Inventory
-            </Link>
-            <button
-              onClick={() => setView('entry')}
-              className={`px-4 py-2 rounded-md text-sm font-medium ${
-                view === 'entry'
-                  ? 'bg-[#e3902b] text-white'
-                  : 'text-gray-700 hover:bg-[#ffdbb0]'
-              }`}
-            >
-              New Reservation
-            </button>
-          </div>
-        </div>
+  <div className="max-w-7xl mx-auto px-4 py-2 sm:px-6 lg:px-8">
+    <div className="flex justify-between items-center h-16">
+      <div className="flex items-center space-x-3">
+        <Image src={logo} alt="Restaurant Logo" width={100} height={100} />
       </div>
-    </nav>
+      <div className="flex items-center space-x-4">
+        <Link
+          href="/"
+          className="px-4 py-2 rounded-md text-sm font-medium bg-[#e3902b] text-white"
+        >
+          Reservations
+        </Link>
+        <Link
+          href="/inventory"
+          className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-[#ffdbb0]"
+        >
+          Inventory
+        </Link>
+        <Link
+          href="/recipe-calculator"
+          className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-[#ffdbb0]"
+        >
+          Recipe Calculator
+        </Link>
+        <button
+          onClick={() => setView('entry')}
+          className={`px-4 py-2 rounded-md text-sm font-medium ${
+            view === 'entry'
+              ? 'bg-[#e3902b] text-white'
+              : 'text-gray-700 hover:bg-[#ffdbb0]'
+          }`}
+        >
+          New Reservation
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
 
     <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       {view === 'dashboard' ? (
