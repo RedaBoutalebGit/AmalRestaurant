@@ -1,6 +1,6 @@
 // components/RecipeCostCalculator.js
-import React, { useState } from 'react';
-import { Plus, Trash2, Calculator, DollarSign, PlusCircle, MinusCircle, FileText, Printer } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Trash2, Calculator, DollarSign, FileText, Printer, Save, List, Edit, RefreshCw, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import logo from '../public/logo.png';
@@ -13,13 +13,180 @@ export default function RecipeCostCalculator() {
   ]);
   const [laborCost, setLaborCost] = useState(0);
   const [overheadCost, setOverheadCost] = useState(0);
-  const [profitMargin, setProfitMargin] = useState(30);
+  const [profitMargin, setProfitMargin] = useState(67); // Updated to your standard 3x multiplier (67% margin)
+  const [currentRecipeId, setCurrentRecipeId] = useState(null);
 
   // For printing
   const [showPrintable, setShowPrintable] = useState(false);
+  
+  // For recipe management
+  const [recipes, setRecipes] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showRecipeList, setShowRecipeList] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  
+  // Fetch recipes on component mount
+  useEffect(() => {
+    fetchRecipes();
+  }, []);
 
   // Units for dropdown
   const units = ['g', 'kg', 'ml', 'l', 'piece', 'tbsp', 'tsp', 'cup', 'oz', 'lb'];
+
+  // API functions
+  const fetchRecipes = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/recipes', {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch recipes');
+      }
+      
+      const data = await response.json();
+      setRecipes(data);
+    } catch (error) {
+      console.error('Error fetching recipes:', error);
+      setErrorMessage('Failed to load recipes');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchRecipe = async (id) => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/recipes?id=${id}`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch recipe');
+      }
+      
+      const recipe = await response.json();
+      
+      // Load recipe data into form
+      setRecipeName(recipe.name);
+      setServings(recipe.servings);
+      setIngredients(recipe.ingredients);
+      setLaborCost(recipe.laborCost);
+      setOverheadCost(recipe.overheadCost);
+      setProfitMargin(recipe.profitMargin);
+      setCurrentRecipeId(recipe.id);
+      
+      // Close recipe list after loading
+      setShowRecipeList(false);
+    } catch (error) {
+      console.error('Error fetching recipe:', error);
+      setErrorMessage('Failed to load recipe');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveRecipe = async () => {
+    if (!recipeName.trim()) {
+      setErrorMessage('Recipe name is required');
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      setSaveSuccess(false);
+      
+      const recipeData = {
+        name: recipeName,
+        servings: parseInt(servings) || 1,
+        ingredients,
+        laborCost: parseFloat(laborCost) || 0,
+        overheadCost: parseFloat(overheadCost) || 0,
+        profitMargin: parseFloat(profitMargin) || 67
+      };
+      
+      let url = '/api/recipes';
+      let method = 'POST';
+      
+      // If editing an existing recipe
+      if (currentRecipeId) {
+        url = '/api/recipes';
+        method = 'PUT';
+        recipeData.id = currentRecipeId;
+      }
+      
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(recipeData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save recipe');
+      }
+      
+      const result = await response.json();
+      
+      // If it's a new recipe, set the current recipe ID
+      if (!currentRecipeId) {
+        setCurrentRecipeId(result.id);
+      }
+      
+      setSaveSuccess(true);
+      setErrorMessage('');
+      
+      // Refresh recipe list
+      fetchRecipes();
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        setSaveSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Error saving recipe:', error);
+      setErrorMessage(error.message || 'Failed to save recipe');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteRecipe = async (id) => {
+    if (!confirm('Are you sure you want to delete this recipe?')) {
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      
+      const response = await fetch(`/api/recipes?id=${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete recipe');
+      }
+      
+      // Reset form if the deleted recipe was the current one
+      if (id === currentRecipeId) {
+        resetForm();
+      }
+      
+      // Refresh recipe list
+      fetchRecipes();
+    } catch (error) {
+      console.error('Error deleting recipe:', error);
+      setErrorMessage('Failed to delete recipe');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Add new ingredient row
   const addIngredient = () => {
@@ -119,8 +286,80 @@ export default function RecipeCostCalculator() {
     ]);
     setLaborCost(0);
     setOverheadCost(0);
-    setProfitMargin(30);
+    setProfitMargin(67); // Reset to 67% (3x multiplier)
+    setCurrentRecipeId(null);
+    setErrorMessage('');
   };
+
+  // Recipe List Modal component
+  const RecipeListModal = () => (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">Saved Recipes</h2>
+          <button 
+            onClick={() => setShowRecipeList(false)}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+          </div>
+        ) : recipes.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <p>No saved recipes found.</p>
+          </div>
+        ) : (
+          <div className="max-h-96 overflow-y-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recipe Name</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {recipes.map(recipe => (
+                  <tr key={recipe.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{recipe.name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button 
+                        onClick={() => fetchRecipe(recipe.id)}
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                      <button 
+                        onClick={() => deleteRecipe(recipe.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={() => setShowRecipeList(false)}
+            className="px-4 py-2 bg-gray-600 text-white rounded-lg"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   // Printable view component
   const PrintableRecipeView = () => (
@@ -268,8 +507,26 @@ export default function RecipeCostCalculator() {
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-800">Recipe Cost Calculator</h1>
+            <h1 className="text-2xl font-bold text-gray-800">
+              Recipe Cost Calculator
+              {currentRecipeId && <span className="ml-2 text-sm text-gray-500">(Editing recipe)</span>}
+            </h1>
             <div className="flex space-x-2">
+              <button 
+                onClick={() => setShowRecipeList(true)}
+                className="px-4 py-2 bg-[#e3902b] text-white rounded-lg flex items-center"
+              >
+                <List className="w-4 h-4 mr-2" />
+                My Recipes
+              </button>
+              <button 
+                onClick={saveRecipe}
+                disabled={isLoading}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg flex items-center disabled:bg-gray-400"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {isLoading ? 'Saving...' : 'Save Recipe'}
+              </button>
               <button 
                 onClick={togglePrintView}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center"
@@ -281,10 +538,29 @@ export default function RecipeCostCalculator() {
                 onClick={resetForm}
                 className="px-4 py-2 bg-gray-600 text-white rounded-lg"
               >
-                Reset
+                New Recipe
               </button>
             </div>
           </div>
+
+          {/* Success/Error Messages */}
+          {saveSuccess && (
+            <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+              <span className="block sm:inline">Recipe saved successfully!</span>
+            </div>
+          )}
+          
+          {errorMessage && (
+            <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+              <span className="block sm:inline">{errorMessage}</span>
+              <button 
+                onClick={() => setErrorMessage('')}
+                className="absolute top-0 bottom-0 right-0 px-4 py-3"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* Recipe Details */}
           <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -496,8 +772,9 @@ export default function RecipeCostCalculator() {
         </div>
       </div>
 
-      {/* Printable View */}
+      {/* Modals */}
       {showPrintable && <PrintableRecipeView />}
+      {showRecipeList && <RecipeListModal />}
     </div>
   );
 }
