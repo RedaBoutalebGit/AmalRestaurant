@@ -363,13 +363,16 @@ export default function RecipeCostCalculator() {
 
   // Printable view component
   const PrintableRecipeView = () => (
-    <div className="fixed inset-0 bg-white z-50 p-8 overflow-auto">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+    <div className="fixed inset-0 bg-white z-50 p-8 overflow-auto print:p-0">
+      <div className="max-w-4xl mx-auto print:max-w-full">
+        <div className="flex justify-between items-center mb-6 print:mb-4">
           <h1 className="text-2xl font-bold">{recipeName || 'Untitled Recipe'} - Cost Breakdown</h1>
-          <div className="flex space-x-4">
+          <div className="flex space-x-4 print:hidden">
             <button 
-              onClick={() => window.print()}
+              onClick={() => {
+                // Use direct window.print() for best compatibility
+                window.print();
+              }}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center"
             >
               <Printer className="w-4 h-4 mr-2" />
@@ -383,89 +386,106 @@ export default function RecipeCostCalculator() {
             </button>
           </div>
         </div>
-
-        <div className="mb-6">
+  
+        <div className="mb-6 print:mb-4">
           <p className="text-gray-600">Servings: {servings}</p>
           <p className="text-gray-600">Date: {new Date().toLocaleDateString()}</p>
         </div>
-
-        <div className="mb-6">
-          <h2 className="text-xl font-bold mb-3">Ingredients</h2>
-          <table className="w-full border-collapse">
+  
+        <div className="mb-6 print:mb-4">
+          <h2 className="text-xl font-bold mb-3 print:text-lg">Ingredients</h2>
+          <table className="w-full border-collapse border border-gray-300">
             <thead>
               <tr className="bg-gray-100">
-                <th className="border p-2 text-left">Ingredient</th>
-                <th className="border p-2 text-left">Quantity</th>
-                <th className="border p-2 text-left">Unit</th>
-                <th className="border p-2 text-left">Cost Per Unit</th>
-                <th className="border p-2 text-left">Total Cost</th>
+                <th className="border border-gray-300 p-2 text-left">Ingredient</th>
+                <th className="border border-gray-300 p-2 text-left">Quantity</th>
+                <th className="border border-gray-300 p-2 text-left">Unit</th>
+                <th className="border border-gray-300 p-2 text-left">Cost Per Unit</th>
+                <th className="border border-gray-300 p-2 text-left">Total Cost</th>
               </tr>
             </thead>
             <tbody>
               {ingredients.map(ingredient => (
                 <tr key={ingredient.id}>
-                  <td className="border p-2">{ingredient.name}</td>
-                  <td className="border p-2">{ingredient.quantity}</td>
-                  <td className="border p-2">{ingredient.unit}</td>
-                  <td className="border p-2">{formatCurrency(parseFloat(ingredient.costPerUnit) || 0)}</td>
-                  <td className="border p-2">{formatCurrency(ingredient.totalCost || 0)}</td>
+                  <td className="border border-gray-300 p-2">{ingredient.name}</td>
+                  <td className="border border-gray-300 p-2">{ingredient.quantity}</td>
+                  <td className="border border-gray-300 p-2">{ingredient.unit}</td>
+                  <td className="border border-gray-300 p-2">{formatCurrency(parseFloat(ingredient.costPerUnit) || 0)}</td>
+                  <td className="border border-gray-300 p-2">{formatCurrency(ingredient.totalCost || 0)}</td>
                 </tr>
               ))}
               <tr className="font-bold">
-                <td colSpan="4" className="border p-2 text-right">Total Ingredient Cost:</td>
-                <td className="border p-2">{formatCurrency(calculateTotalIngredientCost())}</td>
+                <td colSpan="4" className="border border-gray-300 p-2 text-right">Total Ingredient Cost:</td>
+                <td className="border border-gray-300 p-2">{formatCurrency(calculateTotalIngredientCost())}</td>
               </tr>
             </tbody>
           </table>
         </div>
-
-        <div className="mb-6">
-          <h2 className="text-xl font-bold mb-3">Additional Costs</h2>
-          <table className="w-full border-collapse">
+  
+        <div className="mb-6 print:mb-4">
+          <h2 className="text-xl font-bold mb-3 print:text-lg">Additional Costs</h2>
+          <table className="w-full border-collapse border border-gray-300">
             <tbody>
               <tr>
-                <td className="border p-2">Labor Cost</td>
-                <td className="border p-2">{formatCurrency(parseFloat(laborCost) || 0)}</td>
+                <td className="border border-gray-300 p-2">Labor Cost</td>
+                <td className="border border-gray-300 p-2">{formatCurrency(parseFloat(laborCost) || 0)}</td>
               </tr>
               <tr>
-                <td className="border p-2">Overhead Cost</td>
-                <td className="border p-2">{formatCurrency(parseFloat(overheadCost) || 0)}</td>
+                <td className="border border-gray-300 p-2">Overhead Cost</td>
+                <td className="border border-gray-300 p-2">{formatCurrency(parseFloat(overheadCost) || 0)}</td>
               </tr>
               <tr className="font-bold">
-                <td className="border p-2">Total Recipe Cost</td>
-                <td className="border p-2">{formatCurrency(calculateTotalRecipeCost())}</td>
+                <td className="border border-gray-300 p-2">Total Recipe Cost</td>
+                <td className="border border-gray-300 p-2">{formatCurrency(calculateTotalRecipeCost())}</td>
               </tr>
             </tbody>
           </table>
         </div>
-
-        <div className="mb-6">
-          <h2 className="text-xl font-bold mb-3">Price Analysis</h2>
-          <table className="w-full border-collapse">
+  
+        <div className="mb-6 print:mb-4">
+          <h2 className="text-xl font-bold mb-3 print:text-lg">Price Analysis</h2>
+          <table className="w-full border-collapse border border-gray-300">
             <tbody>
               <tr>
-                <td className="border p-2">Cost Per Serving</td>
-                <td className="border p-2">{formatCurrency(calculateCostPerServing())}</td>
+                <td className="border border-gray-300 p-2">Cost Per Serving</td>
+                <td className="border border-gray-300 p-2">{formatCurrency(calculateCostPerServing())}</td>
               </tr>
               <tr>
-                <td className="border p-2">Food Cost Percentage</td>
-                <td className="border p-2">{calculateFoodCostPercentage().toFixed(2)}%</td>
+                <td className="border border-gray-300 p-2">Food Cost Percentage</td>
+                <td className="border border-gray-300 p-2">{calculateFoodCostPercentage().toFixed(2)}%</td>
               </tr>
               <tr>
-                <td className="border p-2">Profit Margin</td>
-                <td className="border p-2">{profitMargin}%</td>
+                <td className="border border-gray-300 p-2">Profit Margin</td>
+                <td className="border border-gray-300 p-2">{profitMargin}%</td>
               </tr>
               <tr className="font-bold">
-                <td className="border p-2">Recommended Selling Price</td>
-                <td className="border p-2">{formatCurrency(calculateSellingPrice())}</td>
+                <td className="border border-gray-300 p-2">Recommended Selling Price</td>
+                <td className="border border-gray-300 p-2">{formatCurrency(calculateSellingPrice())}</td>
               </tr>
               <tr>
-                <td className="border p-2">Profit Per Serving</td>
-                <td className="border p-2">{formatCurrency(calculateProfit())}</td>
+                <td className="border border-gray-300 p-2">Profit Per Serving</td>
+                <td className="border border-gray-300 p-2">{formatCurrency(calculateProfit())}</td>
               </tr>
             </tbody>
           </table>
         </div>
+  
+        {/* Additional section with print styling */}
+        <style jsx global>{`
+          @media print {
+            @page {
+              size: portrait;
+              margin: 1cm;
+            }
+            body {
+              print-color-adjust: exact;
+              -webkit-print-color-adjust: exact;
+            }
+            .print\\:hidden {
+              display: none !important;
+            }
+          }
+        `}</style>
       </div>
     </div>
   );

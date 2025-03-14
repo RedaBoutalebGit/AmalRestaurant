@@ -24,3 +24,67 @@ body {
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
 }
+
+/* Print Styles */
+@media print {
+  /* Basic page setup */
+  @page {
+    size: portrait;
+    margin: 1cm;
+  }
+  
+  /* Hide unnecessary elements */
+  nav, button, .print-hidden {
+    display: none !important;
+  }
+  
+  /* Ensure background colors and images print */
+  * {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+  
+  /* Ensure the table borders and backgrounds print correctly */
+  table, th, td {
+    border-color: #999 !important;
+    background-color: transparent !important;
+  }
+  
+  th {
+    background-color: #f3f4f6 !important;
+  }
+  
+  /* Ensure text sizes are appropriate for printing */
+  body {
+    font-size: 12pt;
+  }
+  
+  h1 {
+    font-size: 18pt;
+  }
+  
+  h2 {
+    font-size: 16pt;
+  }
+  
+  /* Ensure the content fits on the page */
+  .max-w-4xl, .max-w-7xl {
+    max-width: none !important;
+  }
+  
+  /* Ensure all content is visible */
+  .fixed {
+    position: static !important;
+  }
+  
+  /* Improve table readability */
+  table {
+    page-break-inside: avoid;
+    width: 100% !important;
+  }
+  
+  /* Force show any overflow content */
+  .overflow-auto, .overflow-x-auto {
+    overflow: visible !important;
+  }
+}
