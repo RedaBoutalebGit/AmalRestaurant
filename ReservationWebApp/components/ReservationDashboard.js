@@ -4,6 +4,7 @@ import { Calendar, Clock, Users, Phone, Mail, RefreshCw, Check, X, Clock as Cloc
 import ReservationAnalytics from './ReservationAnalytics';
 import Notifications from './Notification';
 import EditReservationDialog from './EditReservationDialog';
+import CheckInStatus from './CheckInStatus';
 
 const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [filterDate, setFilterDate] = useState("");
@@ -321,6 +322,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     }
     return null;
   };
+  
 
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
@@ -560,6 +562,19 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                       <X className="w-4 h-4" />
                     </button>
                   )}
+
+                  {/*CheckInStatus */}
+                    <CheckInStatus 
+                      reservation={reservation} 
+                      onStatusChange={(id, status) => {
+                        // Update the local state to reflect the change
+                        setReservations(prevReservations => 
+                          prevReservations.map(r => 
+                            r.id === id ? {...r, checkedIn: status} : r
+                          )
+                        );
+                      }}
+                    />
   
                   {/* Delete Button */}
                   <button
