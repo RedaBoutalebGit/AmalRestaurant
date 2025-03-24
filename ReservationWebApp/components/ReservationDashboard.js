@@ -1,12 +1,9 @@
 // components/ReservationDashboard.js
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Users, Phone, Mail, RefreshCw, Check, X, Clock as ClockIcon, Trash2, Search, Table, Edit, Pencil, UserCheck, UserX } from 'lucide-react';
+import { Calendar, Clock, Users, Phone, Mail, RefreshCw, Check, X, Clock as ClockIcon, Trash2, Search, Table, Edit, Pencil } from 'lucide-react';
 import ReservationAnalytics from './ReservationAnalytics';
 import Notifications from './Notification';
 import EditReservationDialog from './EditReservationDialog';
-//import CheckInStatus from './CheckInStatus';
-//import CheckInFilter from './CheckInFilter';
-//import CheckInStats from './CheckInStats';
 
 const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [filterDate, setFilterDate] = useState("");
@@ -22,7 +19,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [sortOrder, setSortOrder] = useState('chronological');
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showPastReservations, setShowPastReservations] = useState(false);
-  //const [checkInFilter, setCheckInFilter] = useState('all');
+
 
   // Auto refresh every 30 seconds
   useEffect(() => {
@@ -65,7 +62,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     } finally {
       setUpdatingId(null);
     }
-  };
+};
 
   const handleDelete = async (id) => {
     setDeletingId(id);
@@ -108,37 +105,30 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   };
 
   const filteredReservations = reservations
-    .filter(res => {
-      const reservationDate = convertDate(res.date);
-      const dateMatch = !filterDate || reservationDate === filterDate;
-      const statusMatch = filterStatus === 'all' || res.status === filterStatus;
-      const nameMatch = !searchTerm || res.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const isActive = showPastReservations || !isDatePassed(res.date);
-      
-      // Add check-in filter logic
-      //const checkInMatch = 
-      //checkInFilter === 'all' || 
-      //(checkInFilter === 'arrived' && res.checkedIn === 'yes') ||
-      //(checkInFilter === 'not-arrived' && (res.checkedIn === 'no' || !res.checkedIn));
-      
-      return dateMatch && statusMatch && nameMatch && isActive;
-    })
-    .sort((a, b) => {
-      switch (sortOrder) {
-        case 'chronological':
-          const dateA = new Date(convertDate(a.date) + ' ' + a.time);
-          const dateB = new Date(convertDate(b.date) + ' ' + b.time);
-          return dateA - dateB;
-        case 'reverse':
-          const date1 = new Date(convertDate(a.date) + ' ' + a.time);
-          const date2 = new Date(convertDate(b.date) + ' ' + b.time);
-          return date2 - date1;
-        case 'guests':
-          return b.guests - a.guests;
-        default:
-          return 0;
-      }
-    });
+  .filter(res => {
+    const reservationDate = convertDate(res.date);
+    const dateMatch = !filterDate || reservationDate === filterDate;
+    const statusMatch = filterStatus === 'all' || res.status === filterStatus;
+    const nameMatch = !searchTerm || res.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const isActive = showPastReservations || !isDatePassed(res.date); // Modified line
+    return dateMatch && statusMatch && nameMatch && isActive;
+  })
+  .sort((a, b) => {
+    switch (sortOrder) {
+      case 'chronological':
+        const dateA = new Date(convertDate(a.date) + ' ' + a.time);
+        const dateB = new Date(convertDate(b.date) + ' ' + b.time);
+        return dateA - dateB;
+      case 'reverse':
+        const date1 = new Date(convertDate(a.date) + ' ' + a.time);
+        const date2 = new Date(convertDate(b.date) + ' ' + b.time);
+        return date2 - date1;
+      case 'guests':
+        return b.guests - a.guests;
+      default:
+        return 0;
+    }
+  });
 
   const DeleteConfirmDialog = ({ reservation }) => (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
@@ -286,7 +276,6 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       alert('Failed to assign table');
     }
   };
-  
   const renderSortOptions = () => (
     <select
       value={sortOrder}
@@ -298,7 +287,6 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       <option value="guests">Guest Count</option>
     </select>
   );
-  
   const getEmailStatus = (reservation) => {
     switch(reservation.emailQueue) { // Column L
       case 'queued':
@@ -334,27 +322,6 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     return null;
   };
 
-  // Handle check-in status change
-  const handleCheckInUpdate = async (reservationId, status) => {
-    try {
-      const response = await fetch(`/api/reservations/${reservationId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ checkedIn: status }),
-      });
-
-      if (!response.ok) throw new Error('Failed to update check-in status');
-      
-      await fetchReservations(); // Ensure this fetches fresh data
-    } catch (error) {
-      console.error('Error updating check-in status:', error);
-      alert('Failed to update check-in status');
-    }
-  };
-
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
       <Notifications reservations={reservations} />
@@ -388,9 +355,6 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   
       {/* Analytics Section */}
       <ReservationAnalytics reservations={reservations} />
-      
-      {/* Check-In Statistics 
-      <CheckInStats reservations={reservations} />*/}
   
       {/* Filters */}
       <div className="bg-white p-6 rounded-lg shadow mb-6">
@@ -439,27 +403,18 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
               <option value="guests">Guest Count</option>
             </select>
           </div>
+          <div className="flex items-center space-x-2">
+    <label className="text-sm text-gray-600">
+      <input
+        type="checkbox"
+        checked={showPastReservations}
+        onChange={(e) => setShowPastReservations(e.target.checked)}
+        className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+      />
+      <span className="ml-2">Show past reservations</span>
+    </label>
+  </div>
         </div>
-        
-        {/* Add the check-in filter row 
-        <div className="flex flex-wrap items-center justify-between mt-4">
-          <CheckInFilter 
-            currentFilter={checkInFilter} 
-            onChange={setCheckInFilter} 
-          />
-          
-          <div className="flex items-center mt-2 sm:mt-0">
-            <label className="text-sm text-gray-600 mr-2">
-              <input
-                type="checkbox"
-                checked={showPastReservations}
-                onChange={(e) => setShowPastReservations(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 mr-1"
-              />
-              <span className="ml-2">Show past reservations</span>
-            </label>
-          </div>
-        </div>*/}
       </div>
   
       {/* Reservations List */}
@@ -473,23 +428,13 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
             <div
               key={index}
               className={`rounded-lg shadow p-6 flex flex-col lg:flex-row items-start lg:items-center justify-between hover:shadow-md transition-shadow ${
-                reservation.checkedIn === 'yes'
-                  ? 'border-l-4 border-green-500 bg-green-50'
-                  : isFriday(reservation.date) 
-                    ? 'border-l-4 border-yellow-500 bg-yellow-50' 
-                    : 'bg-white'
+                isFriday(reservation.date) 
+                  ? 'bg-yellow-50 border-l-4 border-yellow-500' 
+                  : 'bg-white'
               }`}
             >
               {/* Reservation Details */}
               <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 lg:space-y-0 lg:space-x-8">
-                {/* Add check-in badge if checked in */}
-                {reservation.checkedIn === 'yes' && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    <UserCheck className="w-3 h-3 mr-1" />
-                    Arrived
-                  </span>
-                )}
-                
                 <div className="flex flex-col items-start space-y-1">
                   <div className="flex items-center space-x-2">
                     <Calendar className="w-5 h-5 text-gray-500" />
@@ -550,12 +495,6 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   
                 {/* Action Buttons */}
                 <div className="flex items-center space-x-2">
-                  {/* Add the CheckInStatus component 
-                  <CheckInStatus 
-                    reservation={reservation} 
-                    onStatusChange={handleCheckInUpdate}
-                  />*/}
-                  
                   {/* Edit Button */}
                   <button
                     onClick={() => {

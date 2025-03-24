@@ -81,7 +81,7 @@ export default async function handler(req, res) {
      // Get current data
      const response = await sheets.spreadsheets.values.get({
        spreadsheetId: process.env.SHEET_ID,
-       range: 'Reservations!A:L',
+       range: 'Reservations!A:K',
      });
 
      const rows = response.data.values || [];
@@ -90,34 +90,6 @@ export default async function handler(req, res) {
      if (rowIndex === -1) {
        return res.status(404).json({ error: 'Reservation not found' });
      }
-
-     // If it's a check-in status update
-  if (updates.checkedIn !== undefined) {
-    try {
-      // Update the checkedIn status (assuming it's in column N, index 13)
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: process.env.SHEET_ID,
-        range: `Reservations!N${rowIndex + 1}`, // Adjust the column letter as needed
-        valueInputOption: 'RAW',
-        requestBody: {
-          values: [[updates.checkedIn]]
-        }
-      });
-
-      return res.status(200).json({ 
-        message: 'Check-in status updated successfully',
-        checkedIn: updates.checkedIn,
-        updatedReservation: {
-          id, // Include the full updated reservation or at least the ID
-          checkedIn: updates.checkedIn
-        }
-      });
-      
-    } catch (error) {
-      console.error('Error updating check-in status:', error);
-      return res.status(500).json({ error: 'Failed to update check-in status' });
-    }
-  }
 
      // If it's a simple status or table update
      if (updates.status !== undefined || updates.table !== undefined) {
