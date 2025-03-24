@@ -125,26 +125,35 @@ export default async function handler(req, res) {
         // console.log('Fetching reservations from sheet');
         const response = await sheets.spreadsheets.values.get({
           spreadsheetId: process.env.SHEET_ID,
-          range: 'Reservations!A2:K',
+          range: 'Reservations!A2:O',
         });
 
         const rows = response.data.values || [];
-        const reservations = rows.map((row, index) => ({
-          id: row[0] || `row-${index + 2}`,
-          date: row[1],
-          time: row[2],
-          name: row[3],
-          guests: parseInt(row[4]) || 0,
-          phone: row[5],
-          email: row[6],
-          source: row[7],
-          status: row[8],
-          notes: row[9],
-          table: row[10],
-          emailSent: row[12] || null, // Column M for email status
-          checkInStatus: row[13] || null,
-          checkInTime: row[14] || null
-        }));
+        const reservations = rows.map((row, index) => {
+          // Find the check-in status column (it could be column N or might have a different index)
+          // First determine the column indices
+          const hasCheckInColumn = row.length >= 14;
+          const checkInStatusIndex = 13; // Column N (0-based)
+          const checkInTimeIndex = 14;   // Column O (0-based)
+          
+          return {
+            id: row[0] || `row-${index + 2}`,
+            date: row[1],
+            time: row[2],
+            name: row[3],
+            guests: parseInt(row[4]) || 0,
+            phone: row[5],
+            email: row[6],
+            source: row[7],
+            status: row[8],
+            notes: row[9],
+            table: row[10],
+            emailQueue: row[11] || null,      // Column L for email queue status
+            emailSent: row[12] || null,       // Column M for email status
+            checkInStatus: hasCheckInColumn ? row[checkInStatusIndex] || 'no' : 'no', // Default to 'no'
+            checkInTime: hasCheckInColumn && row.length > checkInTimeIndex ? row[checkInTimeIndex] || null : null
+          };
+        });
 
         // console.log(`Found ${reservations.length} reservations`);
         res.status(200).json(reservations);

@@ -84,6 +84,13 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     }
   };
 
+  const convertCheckInStatus = (sheetStatus) => {
+    // Convert "yes" from sheet to "arrived" for the app
+    if (sheetStatus === "yes") return "arrived";
+    // All other values (including "no" and undefined) return null
+    return null;
+  };
+
   const convertDate = (date) => {
     const [month, day, year] = date.split('/');
     return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
@@ -107,6 +114,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
 
   const filteredReservations = reservations
   .filter(res => {
+    const appCheckInStatus = convertCheckInStatus(res.checkInStatus);
     const reservationDate = convertDate(res.date);
     const dateMatch = !filterDate || reservationDate === filterDate;
     const statusMatch = filterStatus === 'all' || res.status === filterStatus;
@@ -114,8 +122,8 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     const isActive = showPastReservations || !isDatePassed(res.date);
     const checkInMatch = 
       filterCheckIn === 'all' || 
-      (filterCheckIn === 'arrived' && res.checkInStatus === 'arrived') || 
-      (filterCheckIn === 'expected' && res.checkInStatus !== 'arrived');
+      (filterCheckIn === 'arrived' && (appCheckInStatus === 'arrived' || res.checkInStatus === 'yes')) || 
+      (filterCheckIn === 'expected' && appCheckInStatus !== 'arrived' && res.checkInStatus !== 'yes');
     
     return dateMatch && statusMatch && nameMatch && isActive && checkInMatch; 
   })
@@ -138,8 +146,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
 
   const handleCheckIn = async (reservationId, isCheckedIn) => {
     try {
-      // According to your Google App Script, the check-in status is stored as "yes" or "no"
-      // But for consistency with your React component, we'll use 'arrived' here and convert it in the API
+      // We'll still use 'arrived' in our app logic
       const newStatus = isCheckedIn ? 'arrived' : null;
       const checkInTime = isCheckedIn ? new Date().toLocaleTimeString() : null;
       
@@ -162,12 +169,30 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
         throw new Error(errorData.error || 'Failed to update check-in status');
       }
       
-      await onStatusUpdate(); // Refresh the reservations list
+      // After a successful API call, update the local reservation data as well
+      // This is important so your UI updates immediately
+      const updatedReservations = reservations.map(res => {
+        if (res.id === reservationId) {
+          return {
+            ...res,
+            checkInStatus: isCheckedIn ? 'yes' : 'no', // Use the sheet values here
+            checkInTime: checkInTime
+          };
+        }
+        return res;
+      });
+      
+      // If you have a setter for reservations, use it:
+      // setReservations(updatedReservations);
+      
+      // Otherwise, rely on the full refresh:
+      await onStatusUpdate();
     } catch (error) {
       console.error('Error updating check-in status:', error);
       alert('Failed to update check-in status: ' + error.message);
     }
   };
+  
 
   const DeleteConfirmDialog = ({ reservation }) => (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
@@ -523,19 +548,19 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                   )}
                 </div>
                 {/* Add a visual indicator for check-in status */}
-    <div className="flex items-center">
-      {reservation.checkInStatus === 'arrived' ? (
-        <div className="flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-medium">
-          <CheckCircle className="w-3 h-3 mr-1" />
-          Arrived at {reservation.checkInTime || 'unknown time'}
-        </div>
-      ) : (
-        <div className="flex items-center text-gray-500 text-xs">
-          <Clock className="w-3 h-3 mr-1" />
-          Expected
-        </div>
-      )}
-    </div>
+                <div className="flex items-center">
+                  {reservation.checkInStatus === 'yes' ? (
+                    <div className="flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-medium">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Arrived at {reservation.checkInTime || 'unknown time'}
+                    </div>
+                  ) : (
+                    <div className="flex items-center text-gray-500 text-xs">
+                      <Clock className="w-3 h-3 mr-1" />
+                      Expected
+                    </div>
+                  )}
+                </div>
               </div>
   
               {/* Notes Section */}
@@ -575,16 +600,16 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                   </button>
 
                   {/* Check-In Button */}
-                    <button
-                      onClick={() => handleCheckIn(reservation.id, reservation.checkInStatus !== 'arrived')}
+                  <button
+                      onClick={() => handleCheckIn(reservation.id, reservation.checkInStatus !== 'yes')}
                       className={`p-2 rounded-full transition-colors ${
-                        reservation.checkInStatus === 'arrived' 
+                        reservation.checkInStatus === 'yes' 
                           ? 'bg-green-100 text-green-600 hover:bg-green-200' 
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
-                      title={reservation.checkInStatus === 'arrived' ? "Checked In" : "Check In"}
+                      title={reservation.checkInStatus === 'yes' ? "Checked In" : "Check In"}
                     >
-                      {reservation.checkInStatus === 'arrived' 
+                      {reservation.checkInStatus === 'yes' 
                         ? <Check className="w-4 h-4" /> 
                         : <UserCheck className="w-4 h-4" />}
                     </button>

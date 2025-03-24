@@ -30,6 +30,20 @@ export default function Home() {
       }
 
       const data = await response.json();
+      // Process the received data to handle different check-in status formats
+    const processedData = data.map(reservation => {
+      // Normalize the check-in status to be consistent in our app
+      // Both "yes" and "arrived" should be treated as checked in
+      const isCheckedIn = reservation.checkInStatus === 'yes' || reservation.checkInStatus === 'arrived';
+      
+      return {
+        ...reservation,
+        // Store the actual value from the sheet for future API calls
+        checkInStatus: reservation.checkInStatus || 'no',
+        // Add a computed property for app logic if needed
+        isCheckedIn: isCheckedIn
+      };
+    });
       setReservations(data.map(reservation => ({
         ...reservation,
         checkInStatus: reservation.checkInStatus || null
