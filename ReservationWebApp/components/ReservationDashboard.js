@@ -4,9 +4,9 @@ import { Calendar, Clock, Users, Phone, Mail, RefreshCw, Check, X, Clock as Cloc
 import ReservationAnalytics from './ReservationAnalytics';
 import Notifications from './Notification';
 import EditReservationDialog from './EditReservationDialog';
-import CheckInStatus from './CheckInStatus';
-import CheckInFilter from './CheckInFilter';
-import CheckInStats from './CheckInStats';
+//import CheckInStatus from './CheckInStatus';
+//import CheckInFilter from './CheckInFilter';
+//import CheckInStats from './CheckInStats';
 
 const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [filterDate, setFilterDate] = useState("");
@@ -22,7 +22,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [sortOrder, setSortOrder] = useState('chronological');
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showPastReservations, setShowPastReservations] = useState(false);
-  const [checkInFilter, setCheckInFilter] = useState('all');
+  //const [checkInFilter, setCheckInFilter] = useState('all');
 
   // Auto refresh every 30 seconds
   useEffect(() => {
@@ -116,10 +116,10 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       const isActive = showPastReservations || !isDatePassed(res.date);
       
       // Add check-in filter logic
-      const checkInMatch = 
-      checkInFilter === 'all' || 
-      (checkInFilter === 'arrived' && res.checkedIn === 'yes') ||
-      (checkInFilter === 'not-arrived' && (res.checkedIn === 'no' || !res.checkedIn));
+      //const checkInMatch = 
+      //checkInFilter === 'all' || 
+      //(checkInFilter === 'arrived' && res.checkedIn === 'yes') ||
+      //(checkInFilter === 'not-arrived' && (res.checkedIn === 'no' || !res.checkedIn));
       
       return dateMatch && statusMatch && nameMatch && isActive && checkInMatch;
     })
@@ -389,8 +389,8 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       {/* Analytics Section */}
       <ReservationAnalytics reservations={reservations} />
       
-      {/* Check-In Statistics */}
-      <CheckInStats reservations={reservations} />
+      {/* Check-In Statistics 
+      <CheckInStats reservations={reservations} />*/}
   
       {/* Filters */}
       <div className="bg-white p-6 rounded-lg shadow mb-6">
@@ -441,7 +441,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
           </div>
         </div>
         
-        {/* Add the check-in filter row */}
+        {/* Add the check-in filter row 
         <div className="flex flex-wrap items-center justify-between mt-4">
           <CheckInFilter 
             currentFilter={checkInFilter} 
@@ -459,7 +459,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
               <span className="ml-2">Show past reservations</span>
             </label>
           </div>
-        </div>
+        </div>*/}
       </div>
   
       {/* Reservations List */}
@@ -550,11 +550,11 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   
                 {/* Action Buttons */}
                 <div className="flex items-center space-x-2">
-                  {/* Add the CheckInStatus component */}
+                  {/* Add the CheckInStatus component 
                   <CheckInStatus 
                     reservation={reservation} 
                     onStatusChange={handleCheckInUpdate}
-                  />
+                  />*/}
                   
                   {/* Edit Button */}
                   <button
