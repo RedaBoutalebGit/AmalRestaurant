@@ -81,7 +81,7 @@ export default async function handler(req, res) {
      // Get current data
      const response = await sheets.spreadsheets.values.get({
        spreadsheetId: process.env.SHEET_ID,
-       range: 'Reservations!A:L',
+       range: 'Reservations!A:K',
      });
 
      const rows = response.data.values || [];
