@@ -1,37 +1,21 @@
-// Fixed version of EditReservationDialog.js
 import React, { useState } from 'react';
 import { Calendar, Clock, Users, Phone, Mail, X, Save } from 'lucide-react';
 
 const EditReservationDialog = ({ reservation, onClose, onSave }) => {
-  // Initialize form data with the current reservation values
   const [formData, setFormData] = useState({
-    date: reservation.date || '',
-    time: reservation.time || '',
-    name: reservation.name || '',
-    guests: reservation.guests || '',
+    date: reservation.date,
+    time: reservation.time,
+    name: reservation.name,
+    guests: reservation.guests,
     phone: reservation.phone || '',
     email: reservation.email || '',
     notes: reservation.notes || '',
-    status: reservation.status || 'pending',
+    status: reservation.status,
   });
 
-  // Add state to track form submission
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    
-    try {
-      console.log('Submitting form data:', formData);
-      await onSave(formData);
-      // Note: onClose is called by the parent component after successful save
-    } catch (error) {
-      console.error('Error in form submission:', error);
-      alert('Failed to save changes: ' + error.message);
-      setIsSubmitting(false);
-    }
+    await onSave(formData);
   };
 
   return (
@@ -60,7 +44,6 @@ const EditReservationDialog = ({ reservation, onClose, onSave }) => {
                   value={formData.date}
                   onChange={(e) => setFormData({...formData, date: e.target.value})}
                   className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                  required
                 />
               </div>
             </div>
@@ -76,7 +59,6 @@ const EditReservationDialog = ({ reservation, onClose, onSave }) => {
                   value={formData.time}
                   onChange={(e) => setFormData({...formData, time: e.target.value})}
                   className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                  required
                 />
               </div>
             </div>
@@ -89,7 +71,6 @@ const EditReservationDialog = ({ reservation, onClose, onSave }) => {
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-              required
             />
           </div>
 
@@ -106,7 +87,6 @@ const EditReservationDialog = ({ reservation, onClose, onSave }) => {
                   value={formData.guests}
                   onChange={(e) => setFormData({...formData, guests: e.target.value})}
                   className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                  required
                 />
               </div>
             </div>
@@ -117,7 +97,6 @@ const EditReservationDialog = ({ reservation, onClose, onSave }) => {
                 value={formData.status}
                 onChange={(e) => setFormData({...formData, status: e.target.value})}
                 className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md"
-                required
               >
                 <option value="confirmed">Confirmed</option>
                 <option value="pending">Pending</option>
@@ -172,26 +151,15 @@ const EditReservationDialog = ({ reservation, onClose, onSave }) => {
               type="button"
               onClick={onClose}
               className="px-4 py-2 text-gray-600 hover:text-gray-800"
-              disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center"
-              disabled={isSubmitting}
             >
-              {isSubmitting ? (
-                <>
-                  <div className="w-4 h-4 rounded-full border-2 border-t-transparent border-white animate-spin mr-2"></div>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Changes
-                </>
-              )}
+              <Save className="w-4 h-4 mr-2" />
+              Save Changes
             </button>
           </div>
         </form>

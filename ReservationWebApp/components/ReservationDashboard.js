@@ -7,7 +7,6 @@ import EditReservationDialog from './EditReservationDialog';
 import CheckInStatus from './CheckInStatus';
 import CheckInFilter from './CheckInFilter';
 import CheckInStats from './CheckInStats';
-import TableGrid from './TableGrid';
 
 const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [filterDate, setFilterDate] = useState("");
@@ -229,10 +228,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
 
   const handleEdit = async (updatedData) => {
     try {
-      console.log('Starting edit with data:', updatedData);
-      
-      // Add loading indication if needed
-      // setIsUpdating(true);
+      // console.log('Starting edit with data:', updatedData);
       
       const response = await fetch(`/api/reservations/${selectedReservation.id}`, {
         method: 'PATCH',
@@ -249,33 +245,24 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
           email: updatedData.email,
           notes: updatedData.notes,
           status: updatedData.status,
-          // Preserve existing values that might not be in the form
+          // Preserve existing values
           source: selectedReservation.source,
           table: selectedReservation.table
         }),
       });
   
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update reservation');
-      }
-      
       const responseData = await response.json();
-      console.log('Edit response:', responseData);
+     //  console.log('Edit response:', responseData);
   
-      // Force a full refresh of the reservations
-      await onStatusUpdate();
-      
-      // Close the dialog
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to update reservation');
+      }
+  
+      await onStatusUpdate(); // Refresh the list
       setShowEditDialog(false);
-      
-      // Show success message (if you have a notification system)
-      // setSuccessMessage('Reservation updated successfully');
     } catch (error) {
       console.error('Error in handleEdit:', error);
       alert('Failed to update reservation: ' + error.message);
-    } finally {
-      // setIsUpdating(false);
     }
   };
   
@@ -289,14 +276,8 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
         credentials: 'include',
         body: JSON.stringify({ table: tableNumber }),
       });
-  
+
       if (!response.ok) throw new Error('Failed to assign table');
-      
-      // Update the global table grid if it exists
-      if (window.updateTableStatus) {
-        window.updateTableStatus(tableNumber, true); // Mark the table as occupied
-      }
-      
       await onStatusUpdate();
       setShowTableDialog(false);
       setSelectedTable('');
@@ -418,15 +399,6 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       
       {/* Check-In Statistics */}
       <CheckInStats reservations={reservations} />
-
-      {/* Table Grid - Add this component */}
-<TableGrid 
-  reservations={reservations}
-  onTableStatusChange={(tableNumber, isOccupied) => {
-    console.log(`Table ${tableNumber} is now ${isOccupied ? 'occupied' : 'free'}`);
-    // You can implement additional logic here if needed
-  }}
-/>
   
       {/* Filters */}
       <div className="bg-white p-6 rounded-lg shadow mb-6">
