@@ -1,4 +1,4 @@
-// pages/api/reservations/[id].js
+// Fixed version of pages/api/reservations/[id].js
 import { google } from 'googleapis';
 
 export default async function handler(req, res) {
@@ -33,6 +33,9 @@ export default async function handler(req, res) {
  const { id } = req.query;
 
  try {
+   // Add debug information
+   console.log(`Processing ${req.method} request for reservation ID: ${id}`);
+   
    // Handle DELETE request
    if (req.method === 'DELETE') {
      const response = await sheets.spreadsheets.values.get({
@@ -77,6 +80,9 @@ export default async function handler(req, res) {
    // Handle PATCH request
    if (req.method === 'PATCH') {
      const updates = req.body;
+     
+     // Log the update data for debugging
+     console.log('Update data received:', updates);
 
      // Get current data
      const response = await sheets.spreadsheets.values.get({
@@ -85,34 +91,38 @@ export default async function handler(req, res) {
      });
 
      const rows = response.data.values || [];
+     console.log(`Found ${rows.length} rows in the sheet`);
+     
+     // Find the row with the matching ID
      const rowIndex = rows.findIndex(row => row[0] === id);
+     console.log(`Row index for ID ${id}: ${rowIndex}`);
 
      if (rowIndex === -1) {
        return res.status(404).json({ error: 'Reservation not found' });
      }
 
      // If it's a check-in status update
-  if (updates.checkedIn !== undefined) {
-    try {
-      // Update the checkedIn status (assuming it's in column N, index 13)
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: process.env.SHEET_ID,
-        range: `Reservations!N${rowIndex + 1}`, // Adjust the column letter as needed
-        valueInputOption: 'RAW',
-        requestBody: {
-          values: [[updates.checkedIn]]
-        }
-      });
+     if (updates.checkedIn !== undefined) {
+       try {
+         // Update the checkedIn status (assuming it's in column N, index 13)
+         await sheets.spreadsheets.values.update({
+           spreadsheetId: process.env.SHEET_ID,
+           range: `Reservations!N${rowIndex + 1}`, // Adjust the column letter as needed
+           valueInputOption: 'RAW',
+           requestBody: {
+             values: [[updates.checkedIn]]
+           }
+         });
 
-      return res.status(200).json({ 
-        message: 'Check-in status updated successfully',
-        checkedIn: updates.checkedIn
-      });
-    } catch (error) {
-      console.error('Error updating check-in status:', error);
-      return res.status(500).json({ error: 'Failed to update check-in status' });
-    }
-  }
+         return res.status(200).json({ 
+           message: 'Check-in status updated successfully',
+           checkedIn: updates.checkedIn
+         });
+       } catch (error) {
+         console.error('Error updating check-in status:', error);
+         return res.status(500).json({ error: 'Failed to update check-in status' });
+       }
+     }
 
      // If it's a simple status or table update
      if (updates.status !== undefined || updates.table !== undefined) {
@@ -126,62 +136,62 @@ export default async function handler(req, res) {
              values: [[updates.status]]
            }
          });
+         console.log(`Updated status to ${updates.status} in row ${rowIndex + 1}`);
 
          // If status is confirmed, trigger email
          if (updates.status === 'confirmed') {
-          try {
-            // First update the status to "confirming"
-            await sheets.spreadsheets.values.update({
-              spreadsheetId: process.env.SHEET_ID,
-              range: `Reservations!I${rowIndex + 1}`,
-              valueInputOption: 'RAW',
-              requestBody: {
-                values: [['confirming']]
-              }
-            });
-        
-            // Set email queue status
-            await sheets.spreadsheets.values.update({
-              spreadsheetId: process.env.SHEET_ID,
-              range: `Reservations!L${rowIndex + 1}`,
-              valueInputOption: 'RAW',
-              requestBody: {
-                values: [['queued']]
-              }
-            });
-          } catch (error) {
-            console.error('Error queuing email:', error);
-            throw error;
-          }
-        }
+           try {
+             // First update the status to "confirming"
+             await sheets.spreadsheets.values.update({
+               spreadsheetId: process.env.SHEET_ID,
+               range: `Reservations!I${rowIndex + 1}`,
+               valueInputOption: 'RAW',
+               requestBody: {
+                 values: [['confirming']]
+               }
+             });
+         
+             // Set email queue status
+             await sheets.spreadsheets.values.update({
+               spreadsheetId: process.env.SHEET_ID,
+               range: `Reservations!L${rowIndex + 1}`,
+               valueInputOption: 'RAW',
+               requestBody: {
+                 values: [['queued']]
+               }
+             });
+           } catch (error) {
+             console.error('Error queuing email:', error);
+             throw error;
+           }
+         }
 
-        if (updates.status === 'cancelled') {
-          try {
-            // Update status
-            await sheets.spreadsheets.values.update({
-              spreadsheetId: process.env.SHEET_ID,
-              range: `Reservations!I${rowIndex + 1}`,
-              valueInputOption: 'RAW',
-              requestBody: {
-                values: [['cancelled']]
-              }
-            });
-        
-            // Queue cancellation email
-            await sheets.spreadsheets.values.update({
-              spreadsheetId: process.env.SHEET_ID,
-              range: `Reservations!L${rowIndex + 1}`,
-              valueInputOption: 'RAW',
-              requestBody: {
-                values: [['queuedCancellation']]
-              }
-            });
-          } catch (error) {
-            console.error('Error queuing cancellation email:', error);
-            throw error;
-          }
-        }
-        
+         if (updates.status === 'cancelled') {
+           try {
+             // Update status
+             await sheets.spreadsheets.values.update({
+               spreadsheetId: process.env.SHEET_ID,
+               range: `Reservations!I${rowIndex + 1}`,
+               valueInputOption: 'RAW',
+               requestBody: {
+                 values: [['cancelled']]
+               }
+             });
+         
+             // Queue cancellation email
+             await sheets.spreadsheets.values.update({
+               spreadsheetId: process.env.SHEET_ID,
+               range: `Reservations!L${rowIndex + 1}`,
+               valueInputOption: 'RAW',
+               requestBody: {
+                 values: [['queuedCancellation']]
+               }
+             });
+           } catch (error) {
+             console.error('Error queuing cancellation email:', error);
+             throw error;
+           }
+         }
        }
 
        // Update table if provided
@@ -194,32 +204,44 @@ export default async function handler(req, res) {
              values: [[updates.table]]
            }
          });
+         console.log(`Updated table to ${updates.table} in row ${rowIndex + 1}`);
        }
      } else {
        // Full reservation update
        const currentRow = rows[rowIndex];
+       
+       // Create an array to hold the updated values, ensuring all required fields are present
        const updatedRow = [
-         id,
-         updates.date || currentRow[1],
-         updates.time || currentRow[2],
-         updates.name || currentRow[3],
-         updates.guests ? updates.guests.toString() : currentRow[4],
+         id, // ID should never change
+         updates.date || currentRow[1] || '',
+         updates.time || currentRow[2] || '',
+         updates.name || currentRow[3] || '',
+         (updates.guests ? updates.guests.toString() : currentRow[4]) || '1',
          updates.phone || currentRow[5] || '',
          updates.email || currentRow[6] || '',
-         currentRow[7], // Preserve source
-         updates.status || currentRow[8],
+         currentRow[7] || 'online', // Preserve source
+         updates.status || currentRow[8] || 'pending',
          updates.notes || currentRow[9] || '',
          currentRow[10] || '' // Preserve table assignment
        ];
+       
+       console.log('Updating row with data:', updatedRow);
 
-       await sheets.spreadsheets.values.update({
-         spreadsheetId: process.env.SHEET_ID,
-         range: `Reservations!A${rowIndex + 1}:K${rowIndex + 1}`,
-         valueInputOption: 'RAW',
-         requestBody: {
-           values: [updatedRow]
-         }
-       });
+       // Use BATCH update to update the entire row
+       try {
+         await sheets.spreadsheets.values.update({
+           spreadsheetId: process.env.SHEET_ID,
+           range: `Reservations!A${rowIndex + 1}:K${rowIndex + 1}`,
+           valueInputOption: 'RAW',
+           requestBody: {
+             values: [updatedRow]
+           }
+         });
+         console.log('Update successful');
+       } catch (error) {
+         console.error('Error updating sheet:', error);
+         throw error;
+       }
      }
 
      return res.status(200).json({ 
