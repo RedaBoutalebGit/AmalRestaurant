@@ -19,6 +19,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [sortOrder, setSortOrder] = useState('chronological');
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showPastReservations, setShowPastReservations] = useState(false);
+  const [filterCheckIn, setFilterCheckIn] = useState('all'); // 'all', 'arrived', 'expected'
 
 
   // Auto refresh every 30 seconds
@@ -110,8 +111,13 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     const dateMatch = !filterDate || reservationDate === filterDate;
     const statusMatch = filterStatus === 'all' || res.status === filterStatus;
     const nameMatch = !searchTerm || res.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const isActive = showPastReservations || !isDatePassed(res.date); // Modified line
-    return dateMatch && statusMatch && nameMatch && isActive;
+    const isActive = showPastReservations || !isDatePassed(res.date);
+    const checkInMatch = 
+      filterCheckIn === 'all' || 
+      (filterCheckIn === 'arrived' && res.checkInStatus === 'arrived') || 
+      (filterCheckIn === 'expected' && res.checkInStatus !== 'arrived');
+    
+    return dateMatch && statusMatch && nameMatch && isActive && checkInMatch; 
   })
   .sort((a, b) => {
     switch (sortOrder) {
@@ -129,6 +135,27 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
         return 0;
     }
   });
+
+  const handleCheckIn = async (reservationId, isCheckedIn) => {
+    const newStatus = isCheckedIn ? 'arrived' : null;
+    
+    try {
+      const response = await fetch(`/api/reservations/${reservationId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ checkInStatus: newStatus }),
+      });
+  
+      if (!response.ok) throw new Error('Failed to update check-in status');
+      await onStatusUpdate();
+    } catch (error) {
+      console.error('Error updating check-in status:', error);
+      alert('Failed to update check-in status');
+    }
+  };
 
   const DeleteConfirmDialog = ({ reservation }) => (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
@@ -354,7 +381,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       </div>
   
       {/* Analytics Section */}
-      <ReservationAnalytics reservations={reservations} />
+      <ReservationAnalytics reservations={reservations} selectedDate={filterDate} />
   
       {/* Filters */}
       <div className="bg-white p-6 rounded-lg shadow mb-6">
@@ -363,11 +390,11 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
           <div className="flex items-center space-x-2">
             <Calendar className="w-5 h-5 text-gray-500" />
             <input
-              type="date"
-              value={filterDate}
-              onChange={(e) => setFilterDate(e.target.value)}
-              className="border rounded p-2 focus:ring-2 focus:ring-blue-500 w-full"
-            />
+                type="date"
+                value={filterDate}
+                onChange={(e) => setFilterDate(e.target.value)}
+                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 w-full"
+              />
           </div>
           <div className="flex items-center space-x-2">
             <select
@@ -414,6 +441,17 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       <span className="ml-2">Show past reservations</span>
     </label>
   </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <select
+            value={filterCheckIn}
+            onChange={(e) => setFilterCheckIn(e.target.value)}
+            className="border rounded p-2 focus:ring-2 focus:ring-blue-500 w-full"
+          >
+            <option value="all">All Customers</option>
+            <option value="arrived">Arrived</option>
+            <option value="expected">Expected</option>
+          </select>
         </div>
       </div>
   
@@ -506,6 +544,21 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                   >
                     <Edit className="w-4 h-4" />
                   </button>
+
+                  {/* Check-In Button */}
+                    <button
+                      onClick={() => handleCheckIn(reservation.id, reservation.checkInStatus !== 'arrived')}
+                      className={`p-2 rounded-full transition-colors ${
+                        reservation.checkInStatus === 'arrived' 
+                          ? 'bg-green-100 text-green-600 hover:bg-green-200' 
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                      title={reservation.checkInStatus === 'arrived' ? "Checked In" : "Check In"}
+                    >
+                      {reservation.checkInStatus === 'arrived' 
+                        ? <Check className="w-4 h-4" /> 
+                        : <UserCheck className="w-4 h-4" />}
+                    </button>
   
                   {/* Table Assignment */}
                   <button

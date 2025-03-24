@@ -30,7 +30,10 @@ export default function Home() {
       }
 
       const data = await response.json();
-      setReservations(data);
+      setReservations(data.map(reservation => ({
+        ...reservation,
+        checkInStatus: reservation.checkInStatus || null
+      })));
     } catch (error) {
       console.error('Error fetching reservations:', error);
       setError(error.message);

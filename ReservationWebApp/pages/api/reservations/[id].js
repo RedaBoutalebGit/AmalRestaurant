@@ -160,6 +160,17 @@ export default async function handler(req, res) {
         }
         
        }
+       //CHECKIN
+     if (updates.checkInStatus !== undefined) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: process.env.SHEET_ID,
+        range: `Reservations!N${rowIndex + 1}`, // Assuming column N is available for check-in status
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [[updates.checkInStatus]]
+        }
+      });
+    }
 
        // Update table if provided
        if (updates.table !== undefined) {

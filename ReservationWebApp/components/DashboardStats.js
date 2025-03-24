@@ -3,21 +3,35 @@
 import React from 'react';
 import { Users, Calendar, Clock, TrendingUp } from 'lucide-react';
 
-const DashboardStats = ({ reservations }) => {
+const DashboardStats = ({ reservations, selectedDate }) => {
+  // Use the provided selectedDate or default to today
+  const filterDate = selectedDate ? selectedDate : new Date().toISOString().split('T')[0];
+
   // Calculate statistics
   const stats = {
-    todayCount: reservations.filter(r => r.date === new Date().toISOString().split('T')[0]).length,
+    // Filter reservations for the selected date instead of today
+    todayCount: reservations.filter(r => r.date === filterDate).length,
     totalGuests: reservations.reduce((sum, r) => sum + (parseInt(r.guests) || 0), 0),
-    upcomingCount: reservations.filter(r => r.date >= new Date().toISOString().split('T')[0]).length,
+    // Filter upcoming by considering reservations on or after the selected date
+    upcomingCount: reservations.filter(r => r.date >= filterDate).length,
     avgPartySize: Math.round(reservations.reduce((sum, r) => sum + (parseInt(r.guests) || 0), 0) / reservations.length || 0)
   };
+
+  // Calculate guests for the selected date
+  const selectedDateGuests = reservations
+    .filter(r => r.date === filterDate)
+    .reduce((sum, r) => sum + (parseInt(r.guests) || 0), 0);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
       <div className="bg-white rounded-lg shadow p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-gray-500 text-sm">Today's Reservations</p>
+            <p className="text-gray-500 text-sm">
+              {selectedDate === new Date().toISOString().split('T')[0] 
+                ? "Today's Reservations" 
+                : "Selected Day Reservations"}
+            </p>
             <h3 className="text-2xl font-bold">{stats.todayCount}</h3>
           </div>
           <Calendar className="w-8 h-8 text-blue-500" />
@@ -27,8 +41,12 @@ const DashboardStats = ({ reservations }) => {
       <div className="bg-white rounded-lg shadow p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-gray-500 text-sm">Total Guests</p>
-            <h3 className="text-2xl font-bold">{stats.totalGuests}</h3>
+            <p className="text-gray-500 text-sm">
+              {selectedDate === new Date().toISOString().split('T')[0] 
+                ? "Today's Guests" 
+                : "Selected Day Guests"}
+            </p>
+            <h3 className="text-2xl font-bold">{selectedDateGuests}</h3>
           </div>
           <Users className="w-8 h-8 text-green-500" />
         </div>
