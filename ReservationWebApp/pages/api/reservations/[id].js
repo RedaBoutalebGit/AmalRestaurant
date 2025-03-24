@@ -77,11 +77,12 @@ export default async function handler(req, res) {
    // Handle PATCH request
    if (req.method === 'PATCH') {
      const updates = req.body;
+     console.log("Received updates:", updates);
 
      // Get current data
      const response = await sheets.spreadsheets.values.get({
        spreadsheetId: process.env.SHEET_ID,
-       range: 'Reservations!A:K',
+       range: 'Reservations!A:O', // Extended range to include check-in columns
      });
 
      const rows = response.data.values || [];
@@ -91,8 +92,8 @@ export default async function handler(req, res) {
        return res.status(404).json({ error: 'Reservation not found' });
      }
 
-     // If it's a simple status or table update
-     if (updates.status !== undefined || updates.table !== undefined) {
+     // If it's a simple status or table or check-in update
+     if (updates.status !== undefined || updates.table !== undefined || updates.checkInStatus !== undefined) {
        // Update status if provided
        if (updates.status !== undefined) {
          await sheets.spreadsheets.values.update({
@@ -158,30 +159,7 @@ export default async function handler(req, res) {
             throw error;
           }
         }
-        
        }
-       //CHECKIN
-       if (updates.checkInStatus !== undefined) {
-        await sheets.spreadsheets.values.update({
-          spreadsheetId: process.env.SHEET_ID,
-          range: `Reservations!N${rowIndex + 1}`,
-          valueInputOption: 'RAW',
-          requestBody: {
-            values: [[updates.checkInStatus]]
-          }
-        });
-        // Also update the check-in time if provided
-  if (updates.checkInTime !== undefined) {
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: process.env.SHEET_ID,
-      range: `Reservations!O${rowIndex + 1}`,
-      valueInputOption: 'RAW',
-      requestBody: {
-        values: [[updates.checkInTime]]
-      }
-    });
-  }
-    }
 
        // Update table if provided
        if (updates.table !== undefined) {
@@ -194,9 +172,62 @@ export default async function handler(req, res) {
            }
          });
        }
+       
+       // Handle check-in status update separately
+       if (updates.checkInStatus !== undefined) {
+         try {
+           console.log("Updating check-in status to:", updates.checkInStatus);
+           
+           // Make sure we actually have a column N in the sheet
+           if (rows[0].length < 14) {
+             // Need to append columns for check-in status
+             await sheets.spreadsheets.values.update({
+               spreadsheetId: process.env.SHEET_ID,
+               range: `Reservations!N1:O1`,
+               valueInputOption: 'RAW',
+               requestBody: {
+                 values: [['CheckedIn', 'CheckInTime']]
+               }
+             });
+           }
+           
+           // Update the CheckedIn status (column N) - matching your AppScript logic
+           // Your AppScript uses "no" as default, so when status is "arrived", we set it to "yes"
+           const checkedInValue = updates.checkInStatus === 'arrived' ? 'yes' : 'no';
+           
+           await sheets.spreadsheets.values.update({
+             spreadsheetId: process.env.SHEET_ID,
+             range: `Reservations!N${rowIndex + 1}`,
+             valueInputOption: 'RAW',
+             requestBody: {
+               values: [[checkedInValue]]
+             }
+           });
+           
+           // Also update the check-in time if provided
+           if (updates.checkInTime !== undefined) {
+             await sheets.spreadsheets.values.update({
+               spreadsheetId: process.env.SHEET_ID,
+               range: `Reservations!O${rowIndex + 1}`,
+               valueInputOption: 'RAW',
+               requestBody: {
+                 values: [[updates.checkInTime]]
+               }
+             });
+           }
+         } catch (error) {
+           console.error('Error updating check-in status:', error);
+           throw new Error('Failed to update check-in status: ' + error.message);
+         }
+       }
      } else {
        // Full reservation update
        const currentRow = rows[rowIndex];
+       // Ensure the row has enough elements for all fields we want to update
+       while (currentRow.length < 15) {
+         currentRow.push(''); // Add empty values for missing columns
+       }
+       
        const updatedRow = [
         id,
         updates.date || currentRow[1],
@@ -217,7 +248,7 @@ export default async function handler(req, res) {
 
        await sheets.spreadsheets.values.update({
          spreadsheetId: process.env.SHEET_ID,
-         range: `Reservations!A${rowIndex + 1}:K${rowIndex + 1}`,
+         range: `Reservations!A${rowIndex + 1}:O${rowIndex + 1}`,
          valueInputOption: 'RAW',
          requestBody: {
            values: [updatedRow]

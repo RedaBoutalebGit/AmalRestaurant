@@ -137,10 +137,14 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   });
 
   const handleCheckIn = async (reservationId, isCheckedIn) => {
-    const newStatus = isCheckedIn ? 'arrived' : null;
-    const checkInTime = isCheckedIn ? new Date().toLocaleTimeString() : null;
-    
     try {
+      // According to your Google App Script, the check-in status is stored as "yes" or "no"
+      // But for consistency with your React component, we'll use 'arrived' here and convert it in the API
+      const newStatus = isCheckedIn ? 'arrived' : null;
+      const checkInTime = isCheckedIn ? new Date().toLocaleTimeString() : null;
+      
+      console.log(`Updating check-in status for ${reservationId} to ${newStatus}, time: ${checkInTime}`);
+      
       const response = await fetch(`/api/reservations/${reservationId}`, {
         method: 'PATCH',
         headers: {
@@ -152,12 +156,16 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
           checkInTime: checkInTime 
         }),
       });
-  
-      if (!response.ok) throw new Error('Failed to update check-in status');
-      await onStatusUpdate();
+    
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update check-in status');
+      }
+      
+      await onStatusUpdate(); // Refresh the reservations list
     } catch (error) {
       console.error('Error updating check-in status:', error);
-      alert('Failed to update check-in status');
+      alert('Failed to update check-in status: ' + error.message);
     }
   };
 
