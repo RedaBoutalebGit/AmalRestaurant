@@ -37,7 +37,7 @@ export default async function handler(req, res) {
    if (req.method === 'DELETE') {
      const response = await sheets.spreadsheets.values.get({
        spreadsheetId: process.env.SHEET_ID,
-       range: 'Reservations!A:N',
+       range: 'Reservations!A:K',
      });
 
      const rows = response.data.values || [];
@@ -81,7 +81,7 @@ export default async function handler(req, res) {
      // Get current data
      const response = await sheets.spreadsheets.values.get({
        spreadsheetId: process.env.SHEET_ID,
-       range: 'Reservations!A:N',
+       range: 'Reservations!A:L',
      });
 
      const rows = response.data.values || [];
@@ -92,32 +92,27 @@ export default async function handler(req, res) {
      }
 
      // If it's a check-in status update
-     if (updates.checkedIn !== undefined) {
-       try {
-         // Use column N (index 13) for CheckedIn
-         const columnLetter = 'N';
-         
-         console.log(`Updating check-in status for reservation ${id} to ${updates.checkedIn} in column ${columnLetter}`);
-         
-         // Update the checkedIn status
-         await sheets.spreadsheets.values.update({
-           spreadsheetId: process.env.SHEET_ID,
-           range: `Reservations!${columnLetter}${rowIndex + 1}`,
-           valueInputOption: 'RAW',
-           requestBody: {
-             values: [[updates.checkedIn]]
-           }
-         });
+  if (updates.checkedIn !== undefined) {
+    try {
+      // Update the checkedIn status (assuming it's in column N, index 13)
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: process.env.SHEET_ID,
+        range: `Reservations!N${rowIndex + 1}`, // Adjust the column letter as needed
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [[updates.checkedIn]]
+        }
+      });
 
-         return res.status(200).json({ 
-           message: 'Check-in status updated successfully',
-           checkedIn: updates.checkedIn
-         });
-       } catch (error) {
-         console.error('Error updating check-in status:', error);
-         return res.status(500).json({ error: 'Failed to update check-in status' });
-       }
-     }
+      return res.status(200).json({ 
+        message: 'Check-in status updated successfully',
+        checkedIn: updates.checkedIn
+      });
+    } catch (error) {
+      console.error('Error updating check-in status:', error);
+      return res.status(500).json({ error: 'Failed to update check-in status' });
+    }
+  }
 
      // If it's a simple status or table update
      if (updates.status !== undefined || updates.table !== undefined) {

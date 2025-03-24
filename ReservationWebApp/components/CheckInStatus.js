@@ -1,15 +1,10 @@
 // components/CheckInStatus.js
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { CheckCircle, Circle } from 'lucide-react';
 
 const CheckInStatus = ({ reservation, onStatusChange }) => {
   const [isCheckedIn, setIsCheckedIn] = useState(reservation.checkedIn === 'yes');
   const [isUpdating, setIsUpdating] = useState(false);
-
-  // Update local state when reservation prop changes
-  useEffect(() => {
-    setIsCheckedIn(reservation.checkedIn === 'yes');
-  }, [reservation.checkedIn]);
 
   const handleToggleCheckIn = async () => {
     setIsUpdating(true);
@@ -29,18 +24,12 @@ const CheckInStatus = ({ reservation, onStatusChange }) => {
         throw new Error('Failed to update check-in status');
       }
 
-      // Only update local state after successful API call
       setIsCheckedIn(!isCheckedIn);
-      
-      // Call the parent component's callback to refresh data
       if (onStatusChange) {
-        console.log(`Toggled check-in for ${reservation.id} to ${newStatus}`);
-        await onStatusChange(reservation.id, newStatus);
+        onStatusChange(reservation.id, newStatus);
       }
     } catch (error) {
       console.error('Error updating check-in status:', error);
-      // Revert the local state in case of error
-      setIsCheckedIn(reservation.checkedIn === 'yes');
       // You could add error handling UI here
     } finally {
       setIsUpdating(false);

@@ -69,7 +69,7 @@ export default async function handler(req, res) {
       try {
         const response = await sheets.spreadsheets.values.append({
           spreadsheetId: process.env.SHEET_ID,
-          range: 'Reservations!A:N', // Extended to include checkedIn column
+          range: 'Reservations!A:K',
           valueInputOption: 'USER_ENTERED',
           requestBody: {
             values: [[
@@ -83,17 +83,14 @@ export default async function handler(req, res) {
               source || 'online',
               status || 'pending',
               notes || '',
-              '', // Empty table assignment initially
-              '', // L column (reserved for emailQueue)
-              '', // M column (reserved for emailSent)
-              'no' // N column - CheckedIn status - default to 'no'
+              '' // Empty table assignment initially
             ]]
           }
         });
         // Get the complete updated list for the response
         const updatedResponse = await sheets.spreadsheets.values.get({
           spreadsheetId: process.env.SHEET_ID,
-          range: 'Reservations!A2:N',
+          range: 'Reservations!A2:K',
         });
         const updatedRows = updatedResponse.data.values || [];
         const updatedReservations = updatedRows.map((row, index) => ({
@@ -107,11 +104,9 @@ export default async function handler(req, res) {
           source: row[7],
           status: row[8],
           notes: row[9],
-          table: row[10],
-          emailQueue: row[11] || null,
-          emailSent: row[12] || null,
-          checkedIn: row[13] || 'no' // Include CheckedIn status from column N
+          table: row[10]
         }));
+
 
         res.status(201).json({
           message: 'Reservation created successfully',
@@ -127,44 +122,29 @@ export default async function handler(req, res) {
 
     } else if (req.method === 'GET') {
       try {
-        // Fetch with extended range to include the CheckedIn column (N)
+        // console.log('Fetching reservations from sheet');
         const response = await sheets.spreadsheets.values.get({
           spreadsheetId: process.env.SHEET_ID,
-          range: 'Reservations!A2:N',
+          range: 'Reservations!A2:K',
         });
 
         const rows = response.data.values || [];
-        
-        // Map each row to a reservation object with the checkedIn property
-        const reservations = rows.map((row, index) => {
-          const reservation = {
-            id: row[0] || `row-${index + 2}`,
-            date: row[1],
-            time: row[2],
-            name: row[3],
-            guests: parseInt(row[4]) || 0,
-            phone: row[5],
-            email: row[6],
-            source: row[7],
-            status: row[8],
-            notes: row[9],
-            table: row[10],
-            emailQueue: row[11] || null,
-            emailSent: row[12] || null,
-            checkedIn: row[13] || 'no' // From column N, default to 'no' if not set
-          };
-          
-          return reservation;
-        });
+        const reservations = rows.map((row, index) => ({
+          id: row[0] || `row-${index + 2}`,
+          date: row[1],
+          time: row[2],
+          name: row[3],
+          guests: parseInt(row[4]) || 0,
+          phone: row[5],
+          email: row[6],
+          source: row[7],
+          status: row[8],
+          notes: row[9],
+          table: row[10],
+          emailSent: row[12] || null // Column M for email status
+        }));
 
-        // Debug check-in status distribution
-        console.log('Check-in status distribution:', 
-          reservations.reduce((count, r) => {
-            count[r.checkedIn || 'undefined'] = (count[r.checkedIn || 'undefined'] || 0) + 1;
-            return count;
-          }, {})
-        );
-        
+        // console.log(`Found ${reservations.length} reservations`);
         res.status(200).json(reservations);
       } catch (error) {
         console.error('Error fetching reservations:', error);

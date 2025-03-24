@@ -1,53 +1,29 @@
 // components/CheckInStats.js
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { UserCheck, UserX, Users } from 'lucide-react';
 
 const CheckInStats = ({ reservations }) => {
-  // State to hold calculated stats
-  const [stats, setStats] = useState({
-    totalToday: 0,
-    arrivedCount: 0,
-    notArrivedCount: 0,
-    arrivedPercentage: 0,
-    notArrivedPercentage: 0
-  });
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
 
-  // Calculate statistics whenever reservations change
-  useEffect(() => {
-    // Get today's date in MM/DD/YYYY format (to match your reservation date format)
-    const today = new Date().toLocaleDateString('en-US');
-    
-    // Filter reservations for today
-    const todayReservations = reservations.filter((r) => r.date === today);
-    
-    // Calculate statistics
-    const totalToday = todayReservations.length;
-    const arrivedCount = todayReservations.filter(r => r.checkedIn === 'yes').length;
-    const notArrivedCount = totalToday - arrivedCount;
-    
-    // Calculate percentages
-    const arrivedPercentage = totalToday > 0 ? Math.round((arrivedCount / totalToday) * 100) : 0;
-    const notArrivedPercentage = totalToday > 0 ? 100 - arrivedPercentage : 0;
+  // Helper function to convert date format from MM/DD/YYYY to YYYY-MM-DD
+  const convertDate = (date) => {
+    if (!date) return '';
+    const parts = date.split('/');
+    return parts.length === 3 ? `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}` : date;
+  };
 
-    // Update state with new stats
-    setStats({
-      totalToday,
-      arrivedCount,
-      notArrivedCount,
-      arrivedPercentage,
-      notArrivedPercentage
-    });
-    
-    console.log('Today Reservations:', todayReservations.length);
-    console.log('Arrived Count:', arrivedCount);
-    console.log('Checked-in status counts:', 
-      todayReservations.reduce((count, r) => {
-        count[r.checkedIn || 'undefined'] = (count[r.checkedIn || 'undefined'] || 0) + 1;
-        return count;
-      }, {})
-    );
-    
-  }, [reservations]);
+  // Filter reservations for today
+  const todayReservations = reservations.filter((r) => convertDate(r.date) === today);
+  
+  // Calculate statistics
+  const totalToday = todayReservations.length;
+  const arrivedCount = todayReservations.filter(r => r.checkedIn === 'yes').length;
+  const notArrivedCount = totalToday - arrivedCount;
+  
+  // Calculate percentages
+  const arrivedPercentage = totalToday > 0 ? Math.round((arrivedCount / totalToday) * 100) : 0;
+  const notArrivedPercentage = totalToday > 0 ? 100 - arrivedPercentage : 0;
 
   return (
     <div className="bg-white rounded-lg shadow p-4 mb-6">
@@ -59,7 +35,7 @@ const CheckInStats = ({ reservations }) => {
             <Users className="w-6 h-6 text-blue-500" />
           </div>
           <p className="text-sm text-gray-500">Total Reservations</p>
-          <p className="text-xl font-bold">{stats.totalToday}</p>
+          <p className="text-xl font-bold">{totalToday}</p>
         </div>
         
         <div className="bg-green-50 p-4 rounded-lg text-center">
@@ -67,8 +43,8 @@ const CheckInStats = ({ reservations }) => {
             <UserCheck className="w-6 h-6 text-green-500" />
           </div>
           <p className="text-sm text-gray-500">Arrived</p>
-          <p className="text-xl font-bold">{stats.arrivedCount}</p>
-          <p className="text-sm text-green-600">{stats.arrivedPercentage}%</p>
+          <p className="text-xl font-bold">{arrivedCount}</p>
+          <p className="text-sm text-green-600">{arrivedPercentage}%</p>
         </div>
         
         <div className="bg-red-50 p-4 rounded-lg text-center">
@@ -76,8 +52,8 @@ const CheckInStats = ({ reservations }) => {
             <UserX className="w-6 h-6 text-red-500" />
           </div>
           <p className="text-sm text-gray-500">Not Arrived</p>
-          <p className="text-xl font-bold">{stats.notArrivedCount}</p>
-          <p className="text-sm text-red-600">{stats.notArrivedPercentage}%</p>
+          <p className="text-xl font-bold">{notArrivedCount}</p>
+          <p className="text-sm text-red-600">{notArrivedPercentage}%</p>
         </div>
       </div>
       
@@ -86,12 +62,12 @@ const CheckInStats = ({ reservations }) => {
         <div className="w-full bg-gray-200 rounded-full h-2.5">
           <div 
             className="bg-green-600 h-2.5 rounded-full" 
-            style={{ width: `${stats.arrivedPercentage}%` }}
+            style={{ width: `${arrivedPercentage}%` }}
           ></div>
         </div>
         <div className="flex justify-between mt-1">
-          <span className="text-xs text-gray-500">Arrived: {stats.arrivedPercentage}%</span>
-          <span className="text-xs text-gray-500">Not Arrived: {stats.notArrivedPercentage}%</span>
+          <span className="text-xs text-gray-500">Arrived: {arrivedPercentage}%</span>
+          <span className="text-xs text-gray-500">Not Arrived: {notArrivedPercentage}%</span>
         </div>
       </div>
     </div>
