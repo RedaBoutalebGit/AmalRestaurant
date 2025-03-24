@@ -121,7 +121,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       //(checkInFilter === 'arrived' && res.checkedIn === 'yes') ||
       //(checkInFilter === 'not-arrived' && (res.checkedIn === 'no' || !res.checkedIn));
       
-      return dateMatch && statusMatch && nameMatch && isActive && checkInMatch;
+      return dateMatch && statusMatch && nameMatch && isActive;
     })
     .sort((a, b) => {
       switch (sortOrder) {
