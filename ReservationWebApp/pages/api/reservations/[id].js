@@ -161,15 +161,26 @@ export default async function handler(req, res) {
         
        }
        //CHECKIN
-     if (updates.checkInStatus !== undefined) {
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: process.env.SHEET_ID,
-        range: `Reservations!N${rowIndex + 1}`, // Assuming column N is available for check-in status
-        valueInputOption: 'RAW',
-        requestBody: {
-          values: [[updates.checkInStatus]]
-        }
-      });
+       if (updates.checkInStatus !== undefined) {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: process.env.SHEET_ID,
+          range: `Reservations!N${rowIndex + 1}`,
+          valueInputOption: 'RAW',
+          requestBody: {
+            values: [[updates.checkInStatus]]
+          }
+        });
+        // Also update the check-in time if provided
+  if (updates.checkInTime !== undefined) {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: process.env.SHEET_ID,
+      range: `Reservations!O${rowIndex + 1}`,
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [[updates.checkInTime]]
+      }
+    });
+  }
     }
 
        // Update table if provided
@@ -187,17 +198,21 @@ export default async function handler(req, res) {
        // Full reservation update
        const currentRow = rows[rowIndex];
        const updatedRow = [
-         id,
-         updates.date || currentRow[1],
-         updates.time || currentRow[2],
-         updates.name || currentRow[3],
-         updates.guests ? updates.guests.toString() : currentRow[4],
-         updates.phone || currentRow[5] || '',
-         updates.email || currentRow[6] || '',
-         currentRow[7], // Preserve source
-         updates.status || currentRow[8],
-         updates.notes || currentRow[9] || '',
-         currentRow[10] || '' // Preserve table assignment
+        id,
+        updates.date || currentRow[1],
+        updates.time || currentRow[2],
+        updates.name || currentRow[3],
+        updates.guests ? updates.guests.toString() : currentRow[4],
+        updates.phone || currentRow[5] || '',
+        updates.email || currentRow[6] || '',
+        currentRow[7], // Preserve source
+        updates.status || currentRow[8],
+        updates.notes || currentRow[9] || '',
+        currentRow[10] || '', // Preserve table assignment
+        currentRow[11] || '', // Preserve column L (email queue)
+        currentRow[12] || '', // Preserve column M (email sent)
+        updates.checkInStatus || currentRow[13] || '', // Column N for check-in status
+        updates.checkInTime || currentRow[14] || ''  // Column O for check-in time
        ];
 
        await sheets.spreadsheets.values.update({

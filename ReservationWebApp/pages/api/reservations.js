@@ -141,7 +141,9 @@ export default async function handler(req, res) {
           status: row[8],
           notes: row[9],
           table: row[10],
-          emailSent: row[12] || null // Column M for email status
+          emailSent: row[12] || null, // Column M for email status
+          checkInStatus: row[13] || null,
+          checkInTime: row[14] || null
         }));
 
         // console.log(`Found ${reservations.length} reservations`);

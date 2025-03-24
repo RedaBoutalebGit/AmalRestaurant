@@ -14,13 +14,35 @@ const DashboardStats = ({ reservations, selectedDate }) => {
     totalGuests: reservations.reduce((sum, r) => sum + (parseInt(r.guests) || 0), 0),
     // Filter upcoming by considering reservations on or after the selected date
     upcomingCount: reservations.filter(r => r.date >= filterDate).length,
-    avgPartySize: Math.round(reservations.reduce((sum, r) => sum + (parseInt(r.guests) || 0), 0) / reservations.length || 0)
+    avgPartySize: Math.round(reservations.reduce((sum, r) => sum + (parseInt(r.guests) || 0), 0) / reservations.length || 0),
+    // New check-in stats
+  todayArrivedCount: reservations.filter(r => 
+    r.date === new Date().toISOString().split('T')[0] && 
+    r.checkInStatus === 'arrived'
+  ).length,
+  
+  todayArrivedPercent: Math.round(
+    (reservations.filter(r => 
+      r.date === new Date().toISOString().split('T')[0] && 
+      r.checkInStatus === 'arrived'
+    ).length / 
+    (reservations.filter(r => 
+      r.date === new Date().toISOString().split('T')[0]
+    ).length || 1)) * 100
+  ),
+  
+  todayExpectedCount: reservations.filter(r => 
+    r.date === new Date().toISOString().split('T')[0] && 
+    r.checkInStatus !== 'arrived'
+  ).length
   };
 
   // Calculate guests for the selected date
   const selectedDateGuests = reservations
     .filter(r => r.date === filterDate)
     .reduce((sum, r) => sum + (parseInt(r.guests) || 0), 0);
+
+    
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -71,7 +93,18 @@ const DashboardStats = ({ reservations, selectedDate }) => {
           <TrendingUp className="w-8 h-8 text-orange-500" />
         </div>
       </div>
+      <div className="bg-white rounded-lg shadow p-4">
+  <div className="flex items-center justify-between">
+    <div>
+      <p className="text-gray-500 text-sm">Check-ins Today</p>
+      <h3 className="text-2xl font-bold">{stats.todayArrivedCount}/{stats.todayCount}</h3>
+      <p className="text-xs text-gray-500">{stats.todayArrivedPercent}% arrival rate</p>
     </div>
+    <UserCheck className="w-8 h-8 text-blue-500" />
+  </div>
+  </div>
+    </div>
+    
   );
 };
 

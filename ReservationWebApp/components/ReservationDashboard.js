@@ -1,6 +1,6 @@
 // components/ReservationDashboard.js
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Users, Phone, Mail, RefreshCw, Check, X, Clock as ClockIcon, Trash2, Search, Table, Edit, Pencil } from 'lucide-react';
+import { Calendar, Clock, Users, Phone, Mail, RefreshCw, Check, X, Clock as ClockIcon, Trash2, Search, Table, Edit, Pencil, CheckCircle, UserCheck } from 'lucide-react';
 import ReservationAnalytics from './ReservationAnalytics';
 import Notifications from './Notification';
 import EditReservationDialog from './EditReservationDialog';
@@ -138,6 +138,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
 
   const handleCheckIn = async (reservationId, isCheckedIn) => {
     const newStatus = isCheckedIn ? 'arrived' : null;
+    const checkInTime = isCheckedIn ? new Date().toLocaleTimeString() : null;
     
     try {
       const response = await fetch(`/api/reservations/${reservationId}`, {
@@ -146,7 +147,10 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ checkInStatus: newStatus }),
+        body: JSON.stringify({ 
+          checkInStatus: newStatus,
+          checkInTime: checkInTime 
+        }),
       });
   
       if (!response.ok) throw new Error('Failed to update check-in status');
@@ -465,11 +469,14 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
           filteredReservations.map((reservation, index) => (
             <div
               key={index}
-              className={`rounded-lg shadow p-6 flex flex-col lg:flex-row items-start lg:items-center justify-between hover:shadow-md transition-shadow ${
-                isFriday(reservation.date) 
-                  ? 'bg-yellow-50 border-l-4 border-yellow-500' 
-                  : 'bg-white'
-              }`}
+              className={`rounded-lg shadow p-6 flex flex-col lg:flex-row items-start lg:items-center 
+                justify-between hover:shadow-md transition-shadow ${
+                  isFriday(reservation.date) 
+                    ? 'bg-yellow-50 border-l-4 border-yellow-500' 
+                    : reservation.checkInStatus === 'arrived'
+                      ? 'bg-green-50 border-l-4 border-green-500'
+                      : 'bg-white'
+                }`}
             >
               {/* Reservation Details */}
               <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 lg:space-y-0 lg:space-x-8">
@@ -507,6 +514,20 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                     </div>
                   )}
                 </div>
+                {/* Add a visual indicator for check-in status */}
+    <div className="flex items-center">
+      {reservation.checkInStatus === 'arrived' ? (
+        <div className="flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-medium">
+          <CheckCircle className="w-3 h-3 mr-1" />
+          Arrived at {reservation.checkInTime || 'unknown time'}
+        </div>
+      ) : (
+        <div className="flex items-center text-gray-500 text-xs">
+          <Clock className="w-3 h-3 mr-1" />
+          Expected
+        </div>
+      )}
+    </div>
               </div>
   
               {/* Notes Section */}
