@@ -289,8 +289,14 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
         credentials: 'include',
         body: JSON.stringify({ table: tableNumber }),
       });
-
+  
       if (!response.ok) throw new Error('Failed to assign table');
+      
+      // Update the global table grid if it exists
+      if (window.updateTableStatus) {
+        window.updateTableStatus(tableNumber, true); // Mark the table as occupied
+      }
+      
       await onStatusUpdate();
       setShowTableDialog(false);
       setSelectedTable('');

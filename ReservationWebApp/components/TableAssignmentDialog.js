@@ -5,6 +5,13 @@ const TableAssignmentDialog = ({ reservation, onClose, onAssign }) => {
     
     const handleSubmit = (e) => {
       e.preventDefault();
+      
+      // If the reservation already had a table assigned, clear its occupied status
+      if (reservation.table && window.updateTableStatus) {
+        window.updateTableStatus(reservation.table, false);
+      }
+      
+      // Then assign the new table
       onAssign(reservation.id, tableNumber);
     };
   

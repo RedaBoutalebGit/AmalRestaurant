@@ -1,44 +1,23 @@
 // components/TableGrid.js
 import React, { useState, useEffect } from 'react';
 
-const TableGrid = ({ reservations, onTableStatusChange }) => {
+const TableGrid = ({ onTableStatusChange }) => {
   // Number of tables in the restaurant
   const totalTables = 60;
   
-  // State to track which tables are occupied
+  // State to track which tables are occupied (simple object with table numbers as keys)
   const [occupiedTables, setOccupiedTables] = useState({});
-  
-  // Initialize table status from reservations that have tables assigned
-  useEffect(() => {
-    if (reservations && reservations.length > 0) {
-      const tableStatus = {};
-      reservations.forEach(reservation => {
-        if (reservation.table && reservation.checkedIn === 'yes') {
-          tableStatus[reservation.table] = {
-            occupied: true,
-            reservation: reservation
-          };
-        }
-      });
-      setOccupiedTables(tableStatus);
-    }
-  }, [reservations]);
   
   // Handle clicking on a table to mark it as free/occupied
   const handleTableClick = (tableNumber) => {
     setOccupiedTables(prev => {
       const newStatus = { ...prev };
       
-      // If table has a reservation, we don't allow manual toggling
-      if (newStatus[tableNumber]?.reservation) {
-        return prev;
-      }
-      
       // Toggle the occupied status
       if (newStatus[tableNumber]) {
         delete newStatus[tableNumber]; // Free up the table
       } else {
-        newStatus[tableNumber] = { occupied: true }; // Occupy the table without reservation
+        newStatus[tableNumber] = true; // Occupy the table
       }
       
       // Call the callback if provided
@@ -50,24 +29,35 @@ const TableGrid = ({ reservations, onTableStatusChange }) => {
     });
   };
   
+  // Method to update table status from outside
+  // This can be called from the parent component when a table is assigned
+  useEffect(() => {
+    // Add a method to the window object to allow updating table status from outside
+    window.updateTableStatus = (tableNumber, isOccupied) => {
+      setOccupiedTables(prev => {
+        const newStatus = { ...prev };
+        
+        if (isOccupied) {
+          newStatus[tableNumber] = true;
+        } else {
+          delete newStatus[tableNumber];
+        }
+        
+        return newStatus;
+      });
+    };
+    
+    return () => {
+      // Clean up
+      delete window.updateTableStatus;
+    };
+  }, []);
+  
   // Get the color for a table based on its status
   const getTableColor = (tableNumber) => {
-    if (occupiedTables[tableNumber]) {
-      // If table has a reservation, it's a different color than manually occupied tables
-      return occupiedTables[tableNumber].reservation 
-        ? 'bg-blue-500 text-white' 
-        : 'bg-red-500 text-white';
-    }
-    return 'bg-green-100 hover:bg-green-200 text-green-800';
-  };
-  
-  // Get the tooltip text for a table
-  const getTableTooltip = (tableNumber) => {
-    if (occupiedTables[tableNumber]?.reservation) {
-      const res = occupiedTables[tableNumber].reservation;
-      return `${res.name} - ${res.guests} guests`;
-    }
-    return occupiedTables[tableNumber] ? 'Occupied (manually set)' : 'Available';
+    return occupiedTables[tableNumber]
+      ? 'bg-red-500 text-white'
+      : 'bg-green-100 hover:bg-green-200 text-green-800';
   };
   
   // Create an array of table numbers from 1 to totalTables
@@ -83,7 +73,7 @@ const TableGrid = ({ reservations, onTableStatusChange }) => {
             key={tableNumber}
             onClick={() => handleTableClick(tableNumber.toString())}
             className={`w-12 h-12 rounded-md flex items-center justify-center font-medium cursor-pointer transition-colors ${getTableColor(tableNumber.toString())}`}
-            title={getTableTooltip(tableNumber.toString())}
+            title={occupiedTables[tableNumber] ? 'Occupied' : 'Available'}
           >
             {tableNumber}
           </button>
@@ -96,12 +86,8 @@ const TableGrid = ({ reservations, onTableStatusChange }) => {
           <span>Available</span>
         </div>
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-blue-500 rounded mr-2"></div>
-          <span>Reservation</span>
-        </div>
-        <div className="flex items-center">
           <div className="w-4 h-4 bg-red-500 rounded mr-2"></div>
-          <span>Occupied (Manual)</span>
+          <span>Occupied</span>
         </div>
       </div>
     </div>
