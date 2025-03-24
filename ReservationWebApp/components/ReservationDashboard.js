@@ -117,9 +117,9 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       
       // Add check-in filter logic
       const checkInMatch = 
-        checkInFilter === 'all' || 
-        (checkInFilter === 'arrived' && res.checkedIn === 'yes') ||
-        (checkInFilter === 'not-arrived' && (res.checkedIn === 'no' || !res.checkedIn));
+      checkInFilter === 'all' || 
+      (checkInFilter === 'arrived' && res.checkedIn === 'yes') ||
+      (checkInFilter === 'not-arrived' && (res.checkedIn === 'no' || !res.checkedIn));
       
       return dateMatch && statusMatch && nameMatch && isActive && checkInMatch;
     })
@@ -348,15 +348,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
 
       if (!response.ok) throw new Error('Failed to update check-in status');
       
-      // Update local state to reflect the change
-      const updatedReservations = reservations.map(res => 
-        res.id === reservationId ? {...res, checkedIn: status} : res
-      );
-      
-      // Assuming you have a way to update the parent component's state
-      if (onStatusUpdate) {
-        await onStatusUpdate();
-      }
+      await fetchReservations(); // Ensure this fetches fresh data
     } catch (error) {
       console.error('Error updating check-in status:', error);
       alert('Failed to update check-in status');

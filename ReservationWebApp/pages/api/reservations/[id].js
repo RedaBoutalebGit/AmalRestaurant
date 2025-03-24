@@ -106,8 +106,13 @@ export default async function handler(req, res) {
 
       return res.status(200).json({ 
         message: 'Check-in status updated successfully',
-        checkedIn: updates.checkedIn
+        checkedIn: updates.checkedIn,
+        updatedReservation: {
+          id, // Include the full updated reservation or at least the ID
+          checkedIn: updates.checkedIn
+        }
       });
+      
     } catch (error) {
       console.error('Error updating check-in status:', error);
       return res.status(500).json({ error: 'Failed to update check-in status' });
