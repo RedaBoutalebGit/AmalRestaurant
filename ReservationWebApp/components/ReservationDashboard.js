@@ -115,11 +115,24 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       const nameMatch = !searchTerm || res.name.toLowerCase().includes(searchTerm.toLowerCase());
       const isActive = showPastReservations || !isDatePassed(res.date);
       
-      // Add check-in filter logic
-      const checkInMatch = 
-        checkInFilter === 'all' || 
-        (checkInFilter === 'arrived' && res.checkedIn === 'yes') ||
-        (checkInFilter === 'not-arrived' && (res.checkedIn === 'no' || !res.checkedIn));
+      // Improved check-in filter logic with strict checking
+      let checkInMatch = false;
+      
+      if (checkInFilter === 'all') {
+        checkInMatch = true;
+      } else if (checkInFilter === 'arrived') {
+        // Explicitly check for 'yes' string
+        checkInMatch = res.checkedIn === 'yes';
+      } else if (checkInFilter === 'not-arrived') {
+        // Everything that's not explicitly 'yes'
+        checkInMatch = res.checkedIn !== 'yes';
+      }
+      
+      // Debug today's reservations
+      const isToday = res.date === new Date().toLocaleDateString('en-US');
+      if (isToday) {
+        console.log(`Today's reservation ${res.id} - ${res.name} - CheckedIn: "${res.checkedIn}", Filter: ${checkInFilter}, Match: ${checkInMatch}`);
+      }
       
       return dateMatch && statusMatch && nameMatch && isActive && checkInMatch;
     })
