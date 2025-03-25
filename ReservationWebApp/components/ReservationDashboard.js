@@ -406,7 +406,8 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
           </button>
         </div>
 
-        <div className={`${showFilters ? 'block' : 'hidden md:block'}`}>
+        {/* Note: the showFilters state now controls ALL filters - no longer depends on screen size */}
+        <div className={showFilters ? 'block' : 'hidden'}>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="flex items-center space-x-2">
               <Calendar className="w-5 h-5 text-gray-500" />
@@ -467,7 +468,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
           </div>
         </div>
 
-        {/* Check-in Filter Icons */}
+        {/* Check-in Filter Icons - always visible */}
         <div className="mt-4 flex justify-center md:justify-start">
           <div className="bg-white rounded-lg shadow-sm border p-1 inline-flex">
             <button
@@ -530,7 +531,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                 }`}
             >
               {/* Reservation Details */}
-              <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 lg:space-y-0 lg:space-x-8">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 lg:space-y-0 lg:space-x-8 w-full">
                 <div className="flex flex-col items-start space-y-1">
                   <div className="flex items-center space-x-2">
                     <Calendar className="w-5 h-5 text-gray-500" />
@@ -579,98 +580,98 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                     </div>
                   )}
                 </div>
+  
+                {/* Actions Section */}
+                <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 lg:space-y-0 lg:space-x-4 mt-4 lg:mt-0 ml-auto">
+                  {/* Status Badge */}
+                  <div className="flex items-center space-x-2">
+                  <span className={`px-3 py-1 rounded-full text-sm ${
+                    reservation.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                    reservation.status === 'pending' ? 'bg-orange-100 text-orange-800' :
+                    reservation.status === 'waitlist' ? 'bg-blue-100 text-blue-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {reservation.status}
+                  </span>
+                  {getEmailStatus(reservation)}
+                  </div>
+  
+                  {/* Action Buttons */}
+                  <div className="flex items-center space-x-2">
+                    {/* Edit Button */}
+                    <button
+                      onClick={() => {
+                        setSelectedReservation(reservation);
+                        setShowEditDialog(true);
+                      }}
+                      className="p-2 bg-orange-50 text-orange-600 rounded-full hover:bg-orange-100"
+                      title="Edit Reservation"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+
+                    {/* Check-In Button */}
+                    <button
+                        onClick={() => handleCheckIn(reservation.id, reservation.checkInStatus !== 'yes')}
+                        className={`p-2 rounded-full transition-colors ${
+                          reservation.checkInStatus === 'yes' 
+                            ? 'bg-green-100 text-green-600 hover:bg-green-200' 
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                        title={reservation.checkInStatus === 'yes' ? "Checked In" : "Check In"}
+                      >
+                        {reservation.checkInStatus === 'yes' 
+                          ? <Check className="w-4 h-4" /> 
+                          : <UserCheck className="w-4 h-4" />}
+                      </button>
+  
+                    {/* Table Assignment */}
+                    <button
+                      onClick={() => {
+                        setSelectedReservation(reservation);
+                        setSelectedTable(reservation.table || '');
+                        setShowTableDialog(true);
+                      }}
+                      className="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100"
+                      title="Assign Table"
+                    >
+                      <Table className="w-4 h-4" />
+                    </button>
+  
+                    {/* Current Table Display */}
+                    {reservation.table && (
+                      <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm">
+                        Table {reservation.table}
+                      </span>
+                    )}
+  
+                    {/* Delete Button */}
+                    <button
+                      onClick={() => {
+                        setSelectedReservation(reservation);
+                        setShowDeleteConfirm(true);
+                      }}
+                      disabled={deletingId === reservation.id}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                      title="Delete Reservation"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+  
+                    {/* Loading Indicator */}
+                    {(updatingId === reservation.id || deletingId === reservation.id) && (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                    )}
+                  </div>
+                </div>
               </div>
   
-              {/* Notes Section */}
+              {/* Notes Section - Moved below all information and buttons */}
               {reservation.notes && (
-                <div className="mt-4 lg:mt-0 text-sm text-gray-600 bg-gray-50 p-2 rounded w-full lg:w-auto">
+                <div className="mt-4 text-sm text-gray-600 bg-gray-50 p-3 rounded w-full border border-gray-200">
                   <strong>Notes:</strong> {reservation.notes}
                 </div>
               )}
-  
-              {/* Actions Section */}
-              <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 lg:space-y-0 lg:space-x-4 mt-4 lg:mt-0">
-                {/* Status Badge */}
-                <div className="flex items-center space-x-2">
-                <span className={`px-3 py-1 rounded-full text-sm ${
-                  reservation.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                  reservation.status === 'pending' ? 'bg-orange-100 text-orange-800' :
-                  reservation.status === 'waitlist' ? 'bg-blue-100 text-blue-800' :
-                  'bg-red-100 text-red-800'
-                }`}>
-                  {reservation.status}
-                </span>
-                {getEmailStatus(reservation)}
-                </div>
-  
-                {/* Action Buttons */}
-                <div className="flex items-center space-x-2">
-                  {/* Edit Button */}
-                  <button
-                    onClick={() => {
-                      setSelectedReservation(reservation);
-                      setShowEditDialog(true);
-                    }}
-                    className="p-2 bg-orange-50 text-orange-600 rounded-full hover:bg-orange-100"
-                    title="Edit Reservation"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-
-                  {/* Check-In Button */}
-                  <button
-                      onClick={() => handleCheckIn(reservation.id, reservation.checkInStatus !== 'yes')}
-                      className={`p-2 rounded-full transition-colors ${
-                        reservation.checkInStatus === 'yes' 
-                          ? 'bg-green-100 text-green-600 hover:bg-green-200' 
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                      title={reservation.checkInStatus === 'yes' ? "Checked In" : "Check In"}
-                    >
-                      {reservation.checkInStatus === 'yes' 
-                        ? <Check className="w-4 h-4" /> 
-                        : <UserCheck className="w-4 h-4" />}
-                    </button>
-  
-                  {/* Table Assignment */}
-                  <button
-                    onClick={() => {
-                      setSelectedReservation(reservation);
-                      setSelectedTable(reservation.table || '');
-                      setShowTableDialog(true);
-                    }}
-                    className="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100"
-                    title="Assign Table"
-                  >
-                    <Table className="w-4 h-4" />
-                  </button>
-  
-                  {/* Current Table Display */}
-                  {reservation.table && (
-                    <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm">
-                      Table {reservation.table}
-                    </span>
-                  )}
-  
-                  {/* Delete Button */}
-                  <button
-                    onClick={() => {
-                      setSelectedReservation(reservation);
-                      setShowDeleteConfirm(true);
-                    }}
-                    disabled={deletingId === reservation.id}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                    title="Delete Reservation"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-  
-                  {/* Loading Indicator */}
-                  {(updatingId === reservation.id || deletingId === reservation.id) && (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                  )}
-                </div>
-              </div>
             </div>
           ))
         )}
