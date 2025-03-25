@@ -366,22 +366,8 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
           </span>
         );
       case null:
-        if (reservation.emailSent) { // Column M has timestamp
-          return (
-            <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
-              Email Sent
-            </span>
-          );
-        }
         break;
       default:
-        if (reservation.emailQueue?.startsWith('failed:')) {
-          return (
-            <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded">
-              Email Failed
-            </span>
-          );
-        }
     }
     return null;
   };
