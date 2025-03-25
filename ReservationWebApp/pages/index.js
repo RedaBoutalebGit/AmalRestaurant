@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import ReservationEntry from '../components/ReservationEntry';
 import ReservationDashboard from '../components/ReservationDashboard';
 import Notifications from '../components/Notification';
+import TableStatusGrid from '../components/TableStatusGrid';
 import Image from 'next/image';
 import logo from '../public/logo.png';
 import Link from 'next/link';
@@ -141,14 +142,17 @@ export default function Home() {
 </nav>
 
     <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-      {view === 'dashboard' ? (
-        <ReservationDashboard 
-          reservations={reservations} 
-          onStatusUpdate={fetchReservations}
-        />
-      ) : (
-        <ReservationEntry onSubmit={handleNewReservation} />
-      )}
+    {view === 'dashboard' ? (
+  <>
+    <TableStatusGrid reservations={reservations} />
+    <ReservationDashboard 
+      reservations={reservations} 
+      onStatusUpdate={fetchReservations}
+    />
+  </>
+) : (
+  <ReservationEntry onSubmit={handleNewReservation} />
+)}
     </main>
 
     <footer className="bg-white border-t mt-auto">
