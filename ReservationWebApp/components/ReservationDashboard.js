@@ -1,6 +1,9 @@
 // components/ReservationDashboard.js
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Users, Phone, Mail, RefreshCw, Check, X, Clock as ClockIcon, Trash2, Search, Table, Edit, Pencil, CheckCircle, UserCheck } from 'lucide-react';
+import { Calendar, Clock, Users, Phone, Mail, RefreshCw, Check, X, 
+  Clock as ClockIcon, Trash2, Search, Table, Edit, Pencil, 
+  CheckCircle, UserCheck, Filter, ChevronDown, ChevronUp,
+  UserX, CalendarClock, SlidersHorizontal } from 'lucide-react';
 import ReservationAnalytics from './ReservationAnalytics';
 import Notifications from './Notification';
 import EditReservationDialog from './EditReservationDialog';
@@ -20,7 +23,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showPastReservations, setShowPastReservations] = useState(false);
   const [filterCheckIn, setFilterCheckIn] = useState('all'); // 'all', 'arrived', 'expected'
-
+  const [showFilters, setShowFilters] = useState(false);
 
   // Auto refresh every 30 seconds
   useEffect(() => {
@@ -63,7 +66,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     } finally {
       setUpdatingId(null);
     }
-};
+  };
 
   const handleDelete = async (id) => {
     setDeletingId(id);
@@ -95,13 +98,13 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     const [month, day, year] = date.split('/');
     return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   };
+  
   const isFriday = (dateString) => {
     if (!dateString) return false;
     const date = new Date(dateString);
-    // Add logging to debug
-    // console.log('Checking date:', dateString, 'Day:', date.getDay());
     return date.getDay() === 5; // 5 corresponds to Friday
   };
+  
   const isDatePassed = (reservationDate) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Set to start of day for fair comparison
@@ -182,10 +185,6 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
         return res;
       });
       
-      // If you have a setter for reservations, use it:
-      // setReservations(updatedReservations);
-      
-      // Otherwise, rely on the full refresh:
       await onStatusUpdate();
     } catch (error) {
       console.error('Error updating check-in status:', error);
@@ -282,8 +281,6 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
 
   const handleEdit = async (updatedData) => {
     try {
-      // console.log('Starting edit with data:', updatedData);
-      
       const response = await fetch(`/api/reservations/${selectedReservation.id}`, {
         method: 'PATCH',
         headers: {
@@ -306,7 +303,6 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       });
   
       const responseData = await response.json();
-     //  console.log('Edit response:', responseData);
   
       if (!response.ok) {
         throw new Error(responseData.error || 'Failed to update reservation');
@@ -340,19 +336,9 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       alert('Failed to assign table');
     }
   };
-  const renderSortOptions = () => (
-    <select
-      value={sortOrder}
-      onChange={(e) => setSortOrder(e.target.value)}
-      className="border rounded p-2 focus:ring-2 focus:ring-blue-500"
-    >
-      <option value="chronological">Earliest First</option>
-      <option value="reverse">Latest First</option>
-      <option value="guests">Guest Count</option>
-    </select>
-  );
+
   const getEmailStatus = (reservation) => {
-    switch(reservation.emailQueue) { // Column L
+    switch(reservation.emailQueue) {
       case 'queued':
         return (
           <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">
@@ -408,73 +394,119 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   
       {/* Filters */}
       <div className="bg-white p-6 rounded-lg shadow mb-6">
-        <h3 className="text-lg font-semibold text-gray-700 mb-4">Filters</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="flex items-center space-x-2">
-            <Calendar className="w-5 h-5 text-gray-500" />
-            <input
-                type="date"
-                value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-700">Filters</h3>
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className="text-gray-500 hover:text-gray-700 flex items-center text-sm"
+          >
+            <SlidersHorizontal className="w-4 h-4 mr-1" />
+            {showFilters ? 'Hide Filters' : 'Show Filters'}
+            {showFilters ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
+          </button>
+        </div>
+
+        <div className={`${showFilters ? 'block' : 'hidden md:block'}`}>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="flex items-center space-x-2">
+              <Calendar className="w-5 h-5 text-gray-500" />
+              <input
+                  type="date"
+                  value={filterDate}
+                  onChange={(e) => setFilterDate(e.target.value)}
+                  className="border rounded p-2 focus:ring-2 focus:ring-blue-500 w-full"
+                />
+            </div>
+            <div className="flex items-center space-x-2">
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 w-full"
+              >
+                <option value="all">All Status</option>
+                <option value="confirmed">Confirmed</option> 
+                <option value="pending">Pending</option>      
+                <option value="waitlist">Waitlist</option>    
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Search className="w-5 h-5 text-gray-500" />
+              <input
+                type="text"
+                placeholder="Search by guest name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="border rounded p-2 focus:ring-2 focus:ring-blue-500 w-full"
               />
+            </div>
+            <div className="flex items-center space-x-2">
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+                className="border rounded p-2 focus:ring-2 focus:ring-blue-500 w-full"
+              >
+                <option value="chronological">Earliest First</option>
+                <option value="reverse">Latest First</option>
+                <option value="guests">Guest Count</option>
+              </select>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="border rounded p-2 focus:ring-2 focus:ring-blue-500 w-full"
-            >
-              <option value="all">All Status</option>
-              <option value="confirmed">Confirmed</option> 
-              <option value="pending">Pending</option>      
-              <option value="waitlist">Waitlist</option>    
-              <option value="cancelled">Cancelled</option>
-            </select>
+          
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <label className="flex items-center text-sm text-gray-600 bg-gray-100 px-3 py-2 rounded-lg cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showPastReservations}
+                onChange={(e) => setShowPastReservations(e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 mr-2"
+              />
+              <CalendarClock className="w-4 h-4 mr-2 text-gray-500" />
+              Show past reservations
+            </label>
           </div>
-          <div className="flex items-center space-x-2">
-            <Search className="w-5 h-5 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search by guest name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="border rounded p-2 focus:ring-2 focus:ring-blue-500 w-full"
-            />
-          </div>
-          <div className="flex items-center space-x-2">
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
-              className="border rounded p-2 focus:ring-2 focus:ring-blue-500 w-full"
-            >
-              <option value="chronological">Earliest First</option>
-              <option value="reverse">Latest First</option>
-              <option value="guests">Guest Count</option>
-            </select>
-          </div>
-          <div className="flex items-center space-x-2">
-    <label className="text-sm text-gray-600">
-      <input
-        type="checkbox"
-        checked={showPastReservations}
-        onChange={(e) => setShowPastReservations(e.target.checked)}
-        className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-      />
-      <span className="ml-2">Show past reservations</span>
-    </label>
-  </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <select
-            value={filterCheckIn}
-            onChange={(e) => setFilterCheckIn(e.target.value)}
-            className="border rounded p-2 focus:ring-2 focus:ring-blue-500 w-full"
-          >
-            <option value="all">All Customers</option>
-            <option value="arrived">Arrived</option>
-            <option value="expected">Expected</option>
-          </select>
+
+        {/* Check-in Filter Icons */}
+        <div className="mt-4 flex justify-center md:justify-start">
+          <div className="bg-white rounded-lg shadow-sm border p-1 inline-flex">
+            <button
+              onClick={() => setFilterCheckIn('all')}
+              className={`px-4 py-2 rounded-md flex items-center ${
+                filterCheckIn === 'all' 
+                  ? 'bg-gray-100 text-gray-800 font-medium' 
+                  : 'text-gray-500 hover:bg-gray-50'
+              }`}
+              title="Show all customers"
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              All
+            </button>
+            <button
+              onClick={() => setFilterCheckIn('arrived')}
+              className={`px-4 py-2 rounded-md flex items-center ${
+                filterCheckIn === 'arrived' 
+                  ? 'bg-green-100 text-green-800 font-medium' 
+                  : 'text-gray-500 hover:bg-gray-50'
+              }`}
+              title="Show arrived customers"
+            >
+              <UserCheck className="w-4 h-4 mr-2" />
+              Arrived
+            </button>
+            <button
+              onClick={() => setFilterCheckIn('expected')}
+              className={`px-4 py-2 rounded-md flex items-center ${
+                filterCheckIn === 'expected' 
+                  ? 'bg-blue-100 text-blue-800 font-medium' 
+                  : 'text-gray-500 hover:bg-gray-50'
+              }`}
+              title="Show expected customers"
+            >
+              <UserX className="w-4 h-4 mr-2" />
+              Expected
+            </button>
+          </div>
         </div>
       </div>
   
@@ -492,7 +524,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                 justify-between hover:shadow-md transition-shadow ${
                   isFriday(reservation.date) 
                     ? 'bg-yellow-50 border-l-4 border-yellow-500' 
-                    : reservation.checkInStatus === 'arrived'
+                    : reservation.checkInStatus === 'arrived' || reservation.checkInStatus === 'yes'
                       ? 'bg-green-50 border-l-4 border-green-500'
                       : 'bg-white'
                 }`}
@@ -533,7 +565,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                     </div>
                   )}
                 </div>
-                {/* Add a visual indicator for check-in status */}
+                {/* Visual indicator for check-in status */}
                 <div className="flex items-center">
                   {reservation.checkInStatus === 'yes' ? (
                     <div className="flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-medium">
@@ -618,40 +650,6 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                     <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm">
                       Table {reservation.table}
                     </span>
-                  )}
-  
-                  {/* Status Update Buttons */}
-                  {reservation.status !== 'confirmed' && (
-                    <button
-                      onClick={() => handleStatusUpdate(reservation.id, 'confirmed')}
-                      disabled={updatingId === reservation.id}
-                      className="p-2 bg-green-50 text-green-600 rounded-full hover:bg-green-100 disabled:opacity-50"
-                      title="Confirm Reservation"
-                    >
-                      <Check className="w-4 h-4" />
-                    </button>
-                  )}
-                  
-                  {reservation.status !== 'waitlist' && (
-                    <button
-                      onClick={() => handleStatusUpdate(reservation.id, 'waitlist')}
-                      disabled={updatingId === reservation.id}
-                      className="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 disabled:opacity-50"
-                      title="Move to Waitlist"
-                    >
-                      <ClockIcon className="w-4 h-4" />
-                    </button>
-                  )}
-                  
-                  {reservation.status !== 'cancelled' && (
-                    <button
-                      onClick={() => handleStatusUpdate(reservation.id, 'cancelled')}
-                      disabled={updatingId === reservation.id}
-                      className="p-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100 disabled:opacity-50"
-                      title="Cancel Reservation"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
                   )}
   
                   {/* Delete Button */}
