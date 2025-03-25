@@ -4,12 +4,15 @@ import { Calendar, Clock, Users, Phone, Mail, RefreshCw, Check, X,
   Clock as ClockIcon, Trash2, Search, Table, Edit, Pencil, 
   CheckCircle, UserCheck, Filter, ChevronDown, ChevronUp,
   UserX, CalendarClock, SlidersHorizontal } from 'lucide-react';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 import ReservationAnalytics from './ReservationAnalytics';
 import Notifications from './Notification';
 import EditReservationDialog from './EditReservationDialog';
 
 const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [filterDate, setFilterDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState(null);  // for DatePicker
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -25,7 +28,17 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [filterCheckIn, setFilterCheckIn] = useState('all'); // 'all', 'arrived', 'expected'
   const [showFilters, setShowFilters] = useState(false);
 
-  // Auto refresh every 30 seconds
+  // Set selectedDate when filterDate changes from elsewhere
+  useEffect(() => {
+    if (filterDate) {
+      const [year, month, day] = filterDate.split("-");
+      setSelectedDate(new Date(year, parseInt(month) - 1, day));
+    } else {
+      setSelectedDate(null);
+    }
+  }, [filterDate]);
+
+  // Auto refresh every 60 seconds
   useEffect(() => {
     const intervalId = setInterval(() => {
       handleRefresh();
@@ -454,18 +467,38 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="flex flex-col space-y-1">
               <label className="text-xs font-medium text-gray-600 mb-1">Date</label>
-              <div className="flex items-center space-x-2 bg-gray-50 border rounded-md p-2 focus-within:ring-2 focus-within:ring-blue-200 focus-within:border-blue-400 transition-all">
-                <Calendar className="w-5 h-5 text-gray-500" />
-                <input
-                  type="date"
-                  value={filterDate}
-                  onChange={(e) => setFilterDate(e.target.value)}
-                  className="bg-transparent border-none focus:ring-0 focus:outline-none w-full"
+              <div className="relative flex items-center bg-gray-50 border rounded-md focus-within:ring-2 focus-within:ring-blue-200 focus-within:border-blue-400 transition-all">
+                <div className="absolute left-2 pointer-events-none">
+                  <Calendar className="w-5 h-5 text-gray-500" />
+                </div>
+                <DatePicker
+                  selected={selectedDate}
+                  onChange={(date) => {
+                    setSelectedDate(date);
+                    if (date) {
+                      // Format as YYYY-MM-DD for filterDate
+                      const year = date.getFullYear();
+                      const month = String(date.getMonth() + 1).padStart(2, '0');
+                      const day = String(date.getDate()).padStart(2, '0');
+                      setFilterDate(`${year}-${month}-${day}`);
+                    } else {
+                      setFilterDate("");
+                    }
+                  }}
+                  className="w-full pl-9 pr-9 py-2 bg-transparent border-none focus:ring-0 focus:outline-none"
+                  placeholderText="Select date"
+                  dateFormat="MM/dd/yyyy"
+                  isClearable
+                  showYearDropdown
+                  dropdownMode="select"
                 />
                 {filterDate && (
                   <button 
-                    onClick={() => setFilterDate("")} 
-                    className="text-gray-400 hover:text-gray-600"
+                    onClick={() => {
+                      setFilterDate("");
+                      setSelectedDate(null);
+                    }} 
+                    className="absolute right-2 text-gray-400 hover:text-gray-600"
                     aria-label="Clear date filter"
                   >
                     <X className="w-4 h-4" />
