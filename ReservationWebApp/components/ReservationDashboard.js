@@ -747,6 +747,29 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                 <div className="flex flex-wrap items-center justify-end gap-3 border-t border-gray-100 pt-4">
                   {/* Primary Actions */}
                   <div className="flex items-center gap-2 mr-auto">
+                    {/* Status Update Buttons */}
+                    {reservation.status !== 'confirmed' && (
+                      <button
+                        onClick={() => handleStatusUpdate(reservation.id, 'confirmed')}
+                        className="flex items-center px-3 py-2 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
+                        title="Confirm this reservation"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Confirm
+                      </button>
+                    )}
+                    
+                    {reservation.status !== 'cancelled' && (
+                      <button
+                        onClick={() => handleStatusUpdate(reservation.id, 'cancelled')}
+                        className="flex items-center px-3 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+                        title="Cancel this reservation"
+                      >
+                        <X className="w-4 h-4 mr-1" />
+                        Cancel
+                      </button>
+                    )}
+                    
                     <button
                       onClick={() => handleCheckIn(reservation.id, reservation.checkInStatus !== 'yes')}
                       className={`flex items-center px-3 py-2 rounded-md transition-colors ${
