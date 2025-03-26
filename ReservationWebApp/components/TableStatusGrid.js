@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Users } from 'lucide-react';
 
 const TableStatusGrid = ({ reservations = [] }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   
   // Tables organized by section
   const [tables, setTables] = useState([
@@ -119,7 +119,6 @@ const TableStatusGrid = ({ reservations = [] }) => {
         throw new Error('Failed to update reservation');
       }
       
-      // No need to update local state again as it's already updated above
     } catch (error) {
       console.error('Error freeing table:', error);
       // Revert the local state change if API call fails
@@ -165,28 +164,42 @@ const TableStatusGrid = ({ reservations = [] }) => {
     setTables(updatedTables);
   }, [reservations]);
 
-  // Render a table button
+  // Render a table button with visible reservation info
   const renderTable = (table) => (
     <div
       key={table.id}
-      className={`w-7 h-7 flex items-center justify-center rounded-full cursor-pointer text-xs font-medium
+      className={`relative w-16 h-16 flex flex-col items-center justify-center rounded-lg cursor-pointer text-sm font-medium overflow-hidden
         ${table.available 
           ? 'bg-green-100 hover:bg-green-200 text-green-800' 
           : 'bg-red-100 hover:bg-red-200 text-red-800'
         }`}
       onClick={() => toggleTableStatus(table.id)}
-      title={table.reservation ? `${table.reservation.name} - ${table.reservation.guests}p` : `Table ${table.name}`}
     >
-      {table.name}
-      {table.reservation && (
+      {/* Table number always visible */}
+      <div className="text-lg font-bold">{table.name}</div>
+      
+      {/* Reservation details shown directly on busy tables */}
+      {!table.available && table.reservation && (
+        <div className="text-xs leading-tight text-center mt-1 px-1 w-full overflow-hidden text-ellipsis">
+          <div className="font-medium truncate">{table.reservation.name}</div>
+          <div className="flex items-center justify-center space-x-1">
+            <Users size={10} />
+            <span>{table.reservation.guests}</span>
+          </div>
+        </div>
+      )}
+      
+      {/* Checkout button */}
+      {!table.available && table.reservation && (
         <div 
-          className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-blue-500" 
+          className="absolute bottom-0 right-0 w-6 h-6 rounded-tl-lg bg-blue-500 flex items-center justify-center text-white"
           onClick={(e) => {
             e.stopPropagation();
             freeTable(table.id);
           }}
-          title="Checkout"
-        />
+        >
+          <span className="text-xs">✓</span>
+        </div>
       )}
     </div>
   );
@@ -212,11 +225,11 @@ const TableStatusGrid = ({ reservations = [] }) => {
       {isExpanded && (
         <div className="px-3 pb-3">
           {/* Restaurant layout */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-4">
             {/* Top row */}
-            <div className="bg-gray-100 rounded-md p-2 mb-2">
-              <div className="text-sm font-medium mb-1">Garden A (60-67)</div>
-              <div className="flex flex-wrap gap-1 justify-center">
+            <div className="bg-gray-100 rounded-md p-3 mb-2">
+              <div className="text-sm font-medium mb-2">Garden A (60-67)</div>
+              <div className="flex flex-wrap gap-2 justify-center">
                 {tables
                   .filter(t => t.section === 'Garden A (60-67)')
                   .map(renderTable)}
@@ -225,9 +238,9 @@ const TableStatusGrid = ({ reservations = [] }) => {
             
             <div className="col-span-1"></div>
             
-            <div className="bg-gray-100 rounded-md p-2 mb-2">
-              <div className="text-sm font-medium mb-1">Garden B (30-39)</div>
-              <div className="flex flex-wrap gap-1 justify-center">
+            <div className="bg-gray-100 rounded-md p-3 mb-2">
+              <div className="text-sm font-medium mb-2">Garden B (30-39)</div>
+              <div className="flex flex-wrap gap-2 justify-center">
                 {tables
                   .filter(t => t.section === 'Garden B')
                   .map(renderTable)}
@@ -235,9 +248,9 @@ const TableStatusGrid = ({ reservations = [] }) => {
             </div>
 
             {/* Middle row */}
-            <div className="bg-gray-100 rounded-md p-2 mb-2">
-              <div className="text-sm font-medium mb-1">Garden A (1-10)</div>
-              <div className="flex flex-wrap gap-1 justify-center">
+            <div className="bg-gray-100 rounded-md p-3 mb-2">
+              <div className="text-sm font-medium mb-2">Garden A (1-10)</div>
+              <div className="flex flex-wrap gap-2 justify-center">
                 {tables
                   .filter(t => t.section === 'Garden A (1-10)')
                   .map(renderTable)}
@@ -246,9 +259,9 @@ const TableStatusGrid = ({ reservations = [] }) => {
             
             <div className="col-span-1"></div>
             
-            <div className="bg-gray-100 rounded-md p-2 mb-2">
-              <div className="text-sm font-medium mb-1">Garden A (20-28)</div>
-              <div className="flex flex-wrap gap-1 justify-center">
+            <div className="bg-gray-100 rounded-md p-3 mb-2">
+              <div className="text-sm font-medium mb-2">Garden A (20-28)</div>
+              <div className="flex flex-wrap gap-2 justify-center">
                 {tables
                   .filter(t => t.section === 'Garden A (20-28)')
                   .map(renderTable)}
@@ -256,9 +269,9 @@ const TableStatusGrid = ({ reservations = [] }) => {
             </div>
 
             {/* Bottom row */}
-            <div className="bg-gray-100 rounded-md p-2">
-              <div className="text-sm font-medium mb-1">Hall (40-43)</div>
-              <div className="flex flex-wrap gap-1 justify-center">
+            <div className="bg-gray-100 rounded-md p-3">
+              <div className="text-sm font-medium mb-2">Hall (40-43)</div>
+              <div className="flex flex-wrap gap-2 justify-center">
                 {tables
                   .filter(t => t.section === 'Hall')
                   .map(renderTable)}
@@ -267,9 +280,9 @@ const TableStatusGrid = ({ reservations = [] }) => {
             
             <div className="col-span-1"></div>
             
-            <div className="bg-gray-100 rounded-md p-2">
-              <div className="text-sm font-medium mb-1">Salon (50-57)</div>
-              <div className="flex flex-wrap gap-1 justify-center">
+            <div className="bg-gray-100 rounded-md p-3">
+              <div className="text-sm font-medium mb-2">Salon (50-57)</div>
+              <div className="flex flex-wrap gap-2 justify-center">
                 {tables
                   .filter(t => t.section === 'Salon')
                   .map(renderTable)}
@@ -278,20 +291,20 @@ const TableStatusGrid = ({ reservations = [] }) => {
           </div>
 
           {/* Legend */}
-          <div className="mt-2 flex flex-wrap gap-3 text-xs justify-center">
+          <div className="mt-3 flex flex-wrap gap-4 text-sm justify-center">
             <div className="flex items-center">
-              <div className="w-3 h-3 bg-green-100 rounded-full mr-1"></div>
-              <span className="text-gray-600">Free</span>
+              <div className="w-4 h-4 bg-green-100 rounded-md mr-2"></div>
+              <span className="text-gray-700">Free</span>
             </div>
             <div className="flex items-center">
-              <div className="w-3 h-3 bg-red-100 rounded-full mr-1"></div>
-              <span className="text-gray-600">Busy</span>
+              <div className="w-4 h-4 bg-red-100 rounded-md mr-2"></div>
+              <span className="text-gray-700">Busy</span>
             </div>
             <div className="flex items-center">
-              <div className="relative w-3 h-3 mr-1">
-                <div className="absolute bottom-0 right-0 w-2 h-2 bg-blue-500 rounded-full"></div>
+              <div className="relative w-4 h-4 mr-2">
+                <div className="absolute bottom-0 right-0 w-4 h-4 bg-blue-500 rounded-tl-md"></div>
               </div>
-              <span className="text-gray-600">Checkout</span>
+              <span className="text-gray-700">Checkout</span>
             </div>
           </div>
         </div>
