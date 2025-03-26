@@ -1,7 +1,7 @@
 // components/DashboardStats.js
 
 import React from 'react';
-import { Users, Calendar, Clock, TrendingUp } from 'lucide-react';
+import { Users, Calendar, Clock, TrendingUp, UserCheck  } from 'lucide-react';
 
 const DashboardStats = ({ reservations, selectedDate }) => {
   // Use the provided selectedDate or default to today

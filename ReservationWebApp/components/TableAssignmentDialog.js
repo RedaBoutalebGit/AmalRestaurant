@@ -1,4 +1,6 @@
 // src/components/TableAssignmentDialog.js
+import React, { useState } from 'react';
+import { X, Table } from 'lucide-react';
 
 const TableAssignmentDialog = ({ reservation, onClose, onAssign }) => {
   const [tableNumber, setTableNumber] = useState(reservation.table || '');
@@ -63,3 +65,5 @@ const TableAssignmentDialog = ({ reservation, onClose, onAssign }) => {
     </div>
   );
 };
+
+export default TableAssignmentDialog;
