@@ -12,7 +12,7 @@ const TableStatusGrid = ({ reservations = [] }) => {
       name: String(i + 1),
       available: true,
       reservation: null,
-      section: 'Garden A'
+      section: 'Garden A (1-10)'
     })),
     
     // Tables 20-28: Garden A
@@ -21,7 +21,7 @@ const TableStatusGrid = ({ reservations = [] }) => {
       name: String(i + 20),
       available: true,
       reservation: null,
-      section: 'Garden A'
+      section: 'Garden A (20-28)'
     })),
     
     // Tables 30-39: Garden B
@@ -57,7 +57,7 @@ const TableStatusGrid = ({ reservations = [] }) => {
       name: String(i + 60),
       available: true,
       reservation: null,
-      section: 'Garden A'
+      section: 'Garden A (60-67)'
     }))
   ]);
 
@@ -165,11 +165,37 @@ const TableStatusGrid = ({ reservations = [] }) => {
     setTables(updatedTables);
   }, [reservations]);
 
+  // Render a table button
+  const renderTable = (table) => (
+    <div
+      key={table.id}
+      className={`w-7 h-7 flex items-center justify-center rounded-full cursor-pointer text-xs font-medium
+        ${table.available 
+          ? 'bg-green-100 hover:bg-green-200 text-green-800' 
+          : 'bg-red-100 hover:bg-red-200 text-red-800'
+        }`}
+      onClick={() => toggleTableStatus(table.id)}
+      title={table.reservation ? `${table.reservation.name} - ${table.reservation.guests}p` : `Table ${table.name}`}
+    >
+      {table.name}
+      {table.reservation && (
+        <div 
+          className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-blue-500" 
+          onClick={(e) => {
+            e.stopPropagation();
+            freeTable(table.id);
+          }}
+          title="Checkout"
+        />
+      )}
+    </div>
+  );
+
   return (
     <div className="bg-white shadow rounded-lg mb-6 overflow-hidden">
       {/* Header with toggle button */}
       <div 
-        className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-gray-50"
+        className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50"
         onClick={toggleExpanded}
       >
         <h3 className="text-lg font-medium text-gray-800">Table Status</h3>
@@ -184,54 +210,90 @@ const TableStatusGrid = ({ reservations = [] }) => {
       
       {/* Collapsible content */}
       {isExpanded && (
-        <div className="px-4 pb-6">
-          {/* Render tables by section */}
-          {['Garden A', 'Garden B', 'Hall', 'Salon'].map(section => (
-            <div key={section} className="mb-6">
-              <h4 className="text-md font-semibold mb-2 text-gray-700">{section}</h4>
-              <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-10 lg:grid-cols-12 gap-2">
+        <div className="px-3 pb-3">
+          {/* Restaurant layout */}
+          <div className="grid grid-cols-3 gap-2">
+            {/* Top row */}
+            <div className="bg-gray-100 rounded-md p-2 mb-2">
+              <div className="text-sm font-medium mb-1">Garden A (60-67)</div>
+              <div className="flex flex-wrap gap-1 justify-center">
                 {tables
-                  .filter(table => table.section === section)
-                  .map(table => (
-                    <div
-                      key={table.id}
-                      className={`
-                        p-2 rounded-lg shadow cursor-pointer transition-all flex flex-col items-center justify-center
-                        ${table.available ? 'bg-green-100 hover:bg-green-200' : 'bg-red-100 hover:bg-red-200'}
-                      `}
-                    >
-                      <div 
-                        className="text-base font-bold"
-                        onClick={() => toggleTableStatus(table.id)}
-                      >
-                        {table.name}
-                      </div>
-                      <div 
-                        className={`text-xs ${table.available ? 'text-green-800' : 'text-red-800'}`}
-                        onClick={() => toggleTableStatus(table.id)}
-                      >
-                        {table.available ? 'Free' : 'Busy'}
-                      </div>
-                      {table.reservation && (
-                        <div className="text-xs text-gray-600 text-center">
-                          <div className="font-medium truncate max-w-full w-16">{table.reservation.name.split(' ')[0]}</div>
-                          <div>{table.reservation.guests}p</div>
-                          <button 
-                            className="mt-1 px-2 py-0.5 bg-blue-100 text-blue-800 rounded-sm text-xs hover:bg-blue-200"
-                            onClick={() => freeTable(table.id)}
-                          >
-                            Checkout
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  .filter(t => t.section === 'Garden A (60-67)')
+                  .map(renderTable)}
               </div>
             </div>
-          ))}
-          <p className="mt-4 text-xs text-gray-500">
-            Click on a table to manually toggle its availability. Tables will automatically update when reservations are assigned.
-          </p>
+            
+            <div className="col-span-1"></div>
+            
+            <div className="bg-gray-100 rounded-md p-2 mb-2">
+              <div className="text-sm font-medium mb-1">Garden B (30-39)</div>
+              <div className="flex flex-wrap gap-1 justify-center">
+                {tables
+                  .filter(t => t.section === 'Garden B')
+                  .map(renderTable)}
+              </div>
+            </div>
+
+            {/* Middle row */}
+            <div className="bg-gray-100 rounded-md p-2 mb-2">
+              <div className="text-sm font-medium mb-1">Garden A (1-10)</div>
+              <div className="flex flex-wrap gap-1 justify-center">
+                {tables
+                  .filter(t => t.section === 'Garden A (1-10)')
+                  .map(renderTable)}
+              </div>
+            </div>
+            
+            <div className="col-span-1"></div>
+            
+            <div className="bg-gray-100 rounded-md p-2 mb-2">
+              <div className="text-sm font-medium mb-1">Garden A (20-28)</div>
+              <div className="flex flex-wrap gap-1 justify-center">
+                {tables
+                  .filter(t => t.section === 'Garden A (20-28)')
+                  .map(renderTable)}
+              </div>
+            </div>
+
+            {/* Bottom row */}
+            <div className="bg-gray-100 rounded-md p-2">
+              <div className="text-sm font-medium mb-1">Hall (40-43)</div>
+              <div className="flex flex-wrap gap-1 justify-center">
+                {tables
+                  .filter(t => t.section === 'Hall')
+                  .map(renderTable)}
+              </div>
+            </div>
+            
+            <div className="col-span-1"></div>
+            
+            <div className="bg-gray-100 rounded-md p-2">
+              <div className="text-sm font-medium mb-1">Salon (50-57)</div>
+              <div className="flex flex-wrap gap-1 justify-center">
+                {tables
+                  .filter(t => t.section === 'Salon')
+                  .map(renderTable)}
+              </div>
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div className="mt-2 flex flex-wrap gap-3 text-xs justify-center">
+            <div className="flex items-center">
+              <div className="w-3 h-3 bg-green-100 rounded-full mr-1"></div>
+              <span className="text-gray-600">Free</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-3 h-3 bg-red-100 rounded-full mr-1"></div>
+              <span className="text-gray-600">Busy</span>
+            </div>
+            <div className="flex items-center">
+              <div className="relative w-3 h-3 mr-1">
+                <div className="absolute bottom-0 right-0 w-2 h-2 bg-blue-500 rounded-full"></div>
+              </div>
+              <span className="text-gray-600">Checkout</span>
+            </div>
+          </div>
         </div>
       )}
     </div>
