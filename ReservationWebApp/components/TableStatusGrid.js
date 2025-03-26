@@ -168,7 +168,7 @@ const TableStatusGrid = ({ reservations = [] }) => {
   const renderTable = (table) => (
     <div
       key={table.id}
-      className={`relative w-16 h-16 flex flex-col items-center justify-center rounded-lg cursor-pointer text-sm font-medium overflow-hidden
+      className={`relative w-20 h-20 flex flex-col items-center justify-center rounded-lg cursor-pointer text-sm font-medium overflow-hidden
         ${table.available 
           ? 'bg-green-100 hover:bg-green-200 text-green-800' 
           : 'bg-red-100 hover:bg-red-200 text-red-800'
@@ -180,10 +180,10 @@ const TableStatusGrid = ({ reservations = [] }) => {
       
       {/* Reservation details shown directly on busy tables */}
       {!table.available && table.reservation && (
-        <div className="text-xs leading-tight text-center mt-1 px-1 w-full overflow-hidden text-ellipsis">
+        <div className="text-xs leading-tight text-center mt-2 px-1 w-full overflow-hidden text-ellipsis">
           <div className="font-medium truncate">{table.reservation.name}</div>
-          <div className="flex items-center justify-center space-x-1">
-            <Users size={10} />
+          <div className="flex items-center justify-center space-x-1 mt-1">
+            <Users size={12} />
             <span>{table.reservation.guests}</span>
           </div>
         </div>
@@ -192,13 +192,13 @@ const TableStatusGrid = ({ reservations = [] }) => {
       {/* Checkout button */}
       {!table.available && table.reservation && (
         <div 
-          className="absolute bottom-0 right-0 w-6 h-6 rounded-tl-lg bg-blue-500 flex items-center justify-center text-white"
+          className="absolute bottom-0 right-0 w-8 h-8 rounded-tl-lg bg-blue-500 flex items-center justify-center text-white"
           onClick={(e) => {
             e.stopPropagation();
             freeTable(table.id);
           }}
         >
-          <span className="text-xs">✓</span>
+          <span className="text-sm">✓</span>
         </div>
       )}
     </div>
@@ -223,86 +223,88 @@ const TableStatusGrid = ({ reservations = [] }) => {
       
       {/* Collapsible content */}
       {isExpanded && (
-        <div className="px-3 pb-3">
-          {/* Restaurant layout */}
-          <div className="grid grid-cols-3 gap-4">
-            {/* Top row */}
-            <div className="bg-gray-100 rounded-md p-3 mb-2">
-              <div className="text-sm font-medium mb-2">Garden A (60-67)</div>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {tables
-                  .filter(t => t.section === 'Garden A (60-67)')
-                  .map(renderTable)}
+        <div className="p-4">
+          {/* Top row - Garden A (60-67), Garden A (1-10), Garden B (30-39) */}
+          <div className="flex flex-col space-y-8">
+            <div className="flex flex-row space-x-6">
+              {/* Garden A (60-67) */}
+              <div className="flex-1 bg-gray-100 rounded-lg p-4">
+                <div className="text-md font-semibold mb-3 text-center">Garden A (60-67)</div>
+                <div className="flex flex-wrap gap-3 justify-center">
+                  {tables
+                    .filter(t => t.section === 'Garden A (60-67)')
+                    .map(renderTable)}
+                </div>
+              </div>
+              
+              {/* Garden A (1-10) */}
+              <div className="flex-1 bg-gray-100 rounded-lg p-4">
+                <div className="text-md font-semibold mb-3 text-center">Garden A (1-10)</div>
+                <div className="flex flex-wrap gap-3 justify-center">
+                  {tables
+                    .filter(t => t.section === 'Garden A (1-10)')
+                    .map(renderTable)}
+                </div>
+              </div>
+              
+              {/* Garden A (20-28) */}
+              <div className="flex-1 bg-gray-100 rounded-lg p-4">
+                <div className="text-md font-semibold mb-3 text-center">Garden A (20-28)</div>
+                <div className="flex flex-wrap gap-3 justify-center">
+                  {tables
+                    .filter(t => t.section === 'Garden A (20-28)')
+                    .map(renderTable)}
+                </div>
               </div>
             </div>
             
-            <div className="col-span-1"></div>
-            
-            <div className="bg-gray-100 rounded-md p-3 mb-2">
-              <div className="text-sm font-medium mb-2">Garden B (30-39)</div>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {tables
-                  .filter(t => t.section === 'Garden B')
-                  .map(renderTable)}
+            {/* Bottom row - Garden B (30-39), Hall (40-43), Salon (50-57) */}
+            <div className="flex flex-row space-x-6">
+              {/* Garden B (30-39) */}
+              <div className="flex-1 bg-gray-100 rounded-lg p-4">
+                <div className="text-md font-semibold mb-3 text-center">Garden B (30-39)</div>
+                <div className="flex flex-wrap gap-3 justify-center">
+                  {tables
+                    .filter(t => t.section === 'Garden B')
+                    .map(renderTable)}
+                </div>
               </div>
-            </div>
-
-            {/* Middle row */}
-            <div className="bg-gray-100 rounded-md p-3 mb-2">
-              <div className="text-sm font-medium mb-2">Garden A (1-10)</div>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {tables
-                  .filter(t => t.section === 'Garden A (1-10)')
-                  .map(renderTable)}
+              
+              {/* Hall (40-43) */}
+              <div className="flex-1 bg-gray-100 rounded-lg p-4">
+                <div className="text-md font-semibold mb-3 text-center">Hall (40-43)</div>
+                <div className="flex flex-wrap gap-3 justify-center">
+                  {tables
+                    .filter(t => t.section === 'Hall')
+                    .map(renderTable)}
+                </div>
               </div>
-            </div>
-            
-            <div className="col-span-1"></div>
-            
-            <div className="bg-gray-100 rounded-md p-3 mb-2">
-              <div className="text-sm font-medium mb-2">Garden A (20-28)</div>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {tables
-                  .filter(t => t.section === 'Garden A (20-28)')
-                  .map(renderTable)}
-              </div>
-            </div>
-
-            {/* Bottom row */}
-            <div className="bg-gray-100 rounded-md p-3">
-              <div className="text-sm font-medium mb-2">Hall (40-43)</div>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {tables
-                  .filter(t => t.section === 'Hall')
-                  .map(renderTable)}
-              </div>
-            </div>
-            
-            <div className="col-span-1"></div>
-            
-            <div className="bg-gray-100 rounded-md p-3">
-              <div className="text-sm font-medium mb-2">Salon (50-57)</div>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {tables
-                  .filter(t => t.section === 'Salon')
-                  .map(renderTable)}
+              
+              {/* Salon (50-57) */}
+              <div className="flex-1 bg-gray-100 rounded-lg p-4">
+                <div className="text-md font-semibold mb-3 text-center">Salon (50-57)</div>
+                <div className="flex flex-wrap gap-3 justify-center">
+                  {tables
+                    .filter(t => t.section === 'Salon')
+                    .map(renderTable)}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Legend */}
-          <div className="mt-3 flex flex-wrap gap-4 text-sm justify-center">
+          <div className="mt-6 flex flex-wrap gap-6 text-sm justify-center">
             <div className="flex items-center">
-              <div className="w-4 h-4 bg-green-100 rounded-md mr-2"></div>
+              <div className="w-5 h-5 bg-green-100 rounded-md mr-2"></div>
               <span className="text-gray-700">Free</span>
             </div>
             <div className="flex items-center">
-              <div className="w-4 h-4 bg-red-100 rounded-md mr-2"></div>
+              <div className="w-5 h-5 bg-red-100 rounded-md mr-2"></div>
               <span className="text-gray-700">Busy</span>
             </div>
             <div className="flex items-center">
-              <div className="relative w-4 h-4 mr-2">
-                <div className="absolute bottom-0 right-0 w-4 h-4 bg-blue-500 rounded-tl-md"></div>
+              <div className="relative w-5 h-5 mr-2">
+                <div className="absolute bottom-0 right-0 w-5 h-5 bg-blue-500 rounded-tl-md"></div>
               </div>
               <span className="text-gray-700">Checkout</span>
             </div>
