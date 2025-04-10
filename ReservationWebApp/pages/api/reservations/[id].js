@@ -82,7 +82,7 @@ export default async function handler(req, res) {
      // Get current data
      const response = await sheets.spreadsheets.values.get({
        spreadsheetId: process.env.SHEET_ID,
-       range: 'Reservations!A:O', // Extended range to include check-in columns
+       range: 'Reservations!A:P', // Extended range to include check-in columns
      });
 
      const rows = response.data.values || [];
@@ -91,6 +91,63 @@ export default async function handler(req, res) {
      if (rowIndex === -1) {
        return res.status(404).json({ error: 'Reservation not found' });
      }
+
+     // If it's a service update along with table assignment
+  if (updates.service !== undefined || updates.table !== undefined) {
+    // Update table if provided
+    if (updates.table !== undefined) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: process.env.SHEET_ID,
+        range: `Reservations!K${rowIndex + 1}`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [[updates.table]]
+        }
+      });
+    }
+    
+    // Update service if provided
+    if (updates.service !== undefined) {
+      // Make sure we actually have a column P in the sheet
+      if (rows[0].length < 16) {
+        // Need to append column for service information
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: process.env.SHEET_ID,
+          range: `Reservations!P1`,
+          valueInputOption: 'RAW',
+          requestBody: {
+            values: [['Service']]
+          }
+        });
+      }
+      
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: process.env.SHEET_ID,
+        range: `Reservations!P${rowIndex + 1}`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [[updates.service]]
+        }
+      });
+    }
+    
+    // Update notes if provided
+    if (updates.notes !== undefined) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: process.env.SHEET_ID,
+        range: `Reservations!J${rowIndex + 1}`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [[updates.notes]]
+        }
+      });
+    }
+
+    return res.status(200).json({ 
+      message: 'Reservation updated successfully',
+      updates: updates
+    });
+  }
 
      // If it's a simple status or table or check-in update
      if (updates.status !== undefined || updates.table !== undefined || updates.checkInStatus !== undefined) {

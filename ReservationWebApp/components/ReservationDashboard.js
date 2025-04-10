@@ -295,7 +295,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     }
   };
   
-  const handleTableAssign = async (reservationId, tableNumber, updatedNotes) => {
+  const handleTableAssign = async (reservationId, tableNumber, updatedNotes, service) => {
     try {
       const response = await fetch(`/api/reservations/${reservationId}`, {
         method: 'PATCH',
@@ -305,7 +305,8 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
         credentials: 'include',
         body: JSON.stringify({ 
           table: tableNumber,
-          notes: updatedNotes 
+          notes: updatedNotes,
+          service: service // Adding service information
         }),
       });
   
@@ -344,7 +345,13 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     <div className="space-y-6 p-4 md:p-6 bg-gray-50 min-h-screen transition-all">
       <Notifications reservations={reservations} />
       {showDeleteConfirm && <DeleteConfirmDialog reservation={selectedReservation} />}
-      {showTableDialog && <TableAssignDialog reservation={selectedReservation} />}
+      {showTableDialog && selectedReservation && (
+  <TableAssignmentDialog
+    reservation={selectedReservation}
+    onClose={() => setShowTableDialog(false)}
+    onAssign={handleTableAssign}
+  />
+)}
       {showEditDialog && selectedReservation && (
         <EditReservationDialog
           reservation={selectedReservation}

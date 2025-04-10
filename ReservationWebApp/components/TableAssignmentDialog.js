@@ -54,8 +54,8 @@ const TableAssignmentDialog = ({ reservation, onClose, onAssign }) => {
       }
     }
     
-    // Call the onAssign function with table number and updated notes
-    onAssign(reservation.id, tableNumber, updatedNotes);
+    // Call the onAssign function with table number, updated notes, and service
+    onAssign(reservation.id, tableNumber, updatedNotes, serviceTime);
   };
 
   // Handle input changes without losing focus
