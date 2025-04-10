@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight, Users, X, Clock } from 'lucide-react';
+import { ChevronDown, ChevronRight, Users, X, Clock, Coffee } from 'lucide-react';
 
 const TableStatusGrid = ({ reservations = [] }) => {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -11,66 +11,72 @@ const TableStatusGrid = ({ reservations = [] }) => {
     second: { name: "2nd Service", time: "14:00 - 15:30" }
   };
   
-  // Tables organized by section
+  // Enhanced table structure that can handle multiple services
   const [tables, setTables] = useState([
     // Tables 1-10: Garden A
     ...Array.from({ length: 10 }, (_, i) => ({
       id: i + 1,
       name: String(i + 1),
-      available: true,
-      reservation: null,
       section: 'Garden A (1-10)',
-      service: null
+      services: {
+        first: { available: true, reservation: null },
+        second: { available: true, reservation: null }
+      }
     })),
     
     // Tables 20-28: Garden A
     ...Array.from({ length: 9 }, (_, i) => ({
       id: i + 20,
       name: String(i + 20),
-      available: true,
-      reservation: null,
       section: 'Garden A (20-28)',
-      service: null
+      services: {
+        first: { available: true, reservation: null },
+        second: { available: true, reservation: null }
+      }
     })),
     
     // Tables 30-39: Garden B
     ...Array.from({ length: 10 }, (_, i) => ({
       id: i + 30,
       name: String(i + 30),
-      available: true,
-      reservation: null,
       section: 'Garden B',
-      service: null
+      services: {
+        first: { available: true, reservation: null },
+        second: { available: true, reservation: null }
+      }
     })),
     
     // Tables 40-43: Hall
     ...Array.from({ length: 4 }, (_, i) => ({
       id: i + 40,
       name: String(i + 40),
-      available: true,
-      reservation: null,
       section: 'Hall',
-      service: null
+      services: {
+        first: { available: true, reservation: null },
+        second: { available: true, reservation: null }
+      }
     })),
     
     // Tables 50-57: Salon
     ...Array.from({ length: 8 }, (_, i) => ({
       id: i + 50,
       name: String(i + 50),
-      available: true,
-      reservation: null,
       section: 'Salon',
-      service: null
+      services: {
+        first: { available: true, reservation: null },
+        second: { available: true, reservation: null }
+      }
     })),
     
     // Tables 60-67: Garden A
     ...Array.from({ length: 8 }, (_, i) => ({
       id: i + 60,
       name: String(i + 60),
-      available: true,
-      reservation: null,
       section: 'Garden A (60-67)',
-      service: null
+      services: {
+        first: { available: true, reservation: null },
+        second: { available: true, reservation: null }
+      }
     }))
   ]);
 
@@ -78,15 +84,25 @@ const TableStatusGrid = ({ reservations = [] }) => {
   const getServiceFromTime = (time) => {
     if (!time) return null;
     
-    // Convert time to 24-hour format if it's in 12-hour format
-    let hour = parseInt(time.split(':')[0]);
-    const isPM = time.toLowerCase().includes('pm');
+    // Check if the time includes AM/PM format or is in 24-hour format
+    const timeStr = time.toLowerCase();
+    let hour = 0;
     
-    if (isPM && hour < 12) {
-      hour += 12;
+    if (timeStr.includes('am') || timeStr.includes('pm')) {
+      // Handle 12-hour format (e.g., "2:30 PM")
+      const isPM = timeStr.includes('pm');
+      const timeParts = timeStr.replace(/(am|pm)/i, '').trim().split(':');
+      hour = parseInt(timeParts[0]);
+      
+      // Convert to 24-hour format
+      if (isPM && hour < 12) hour += 12;
+      if (!isPM && hour === 12) hour = 0;
+    } else {
+      // Handle 24-hour format (e.g., "14:30")
+      hour = parseInt(time.split(':')[0]);
     }
     
-    // Check which service the time falls into
+    // Set service based on hour
     if (hour >= 12 && hour < 14) {
       return 'first';
     } else if (hour >= 14 && hour < 15.5) {
@@ -96,50 +112,58 @@ const TableStatusGrid = ({ reservations = [] }) => {
     return null;
   };
 
+  // Look for service information in the notes or from service column
+  const getServiceInfo = (reservation) => {
+    // First check if service is directly in the reservation object
+    if (reservation.service) {
+      return reservation.service;
+    }
+    
+    // Then check the notes
+    if (reservation.notes) {
+      if (reservation.notes.includes('1st Service') || reservation.notes.includes('first service')) {
+        return 'first';
+      } else if (reservation.notes.includes('2nd Service') || reservation.notes.includes('second service')) {
+        return 'second';
+      }
+    }
+    
+    // Finally, try to determine from time
+    return getServiceFromTime(reservation.time);
+  };
+
   // Toggle the expanded state of the section
   const toggleExpanded = () => {
     setIsExpanded(!isExpanded);
   };
 
-  // Toggle the availability of a table manually
-  const toggleTableStatus = (tableId) => {
-    setTables(tables.map(table => {
-      if (table.id === tableId) {
-        return {
-          ...table,
-          available: !table.available,
-          // Clear reservation if making available
-          reservation: !table.available ? null : table.reservation,
-          service: !table.available ? null : table.service
-        };
-      }
-      return table;
-    }));
-  };
-
-  // Free up a table and update the reservation status
-  const freeTable = async (tableId, event) => {
+  // Free up a table for a specific service
+  const freeTable = async (tableId, service, event) => {
     event.stopPropagation();
     
-    // Find the table and its reservation
+    // Find the table and its reservation for this service
     const table = tables.find(t => t.id === tableId);
-    if (!table || !table.reservation) return;
+    if (!table || !table.services[service] || !table.services[service].reservation) return;
     
-    // Free the table locally
+    // Get the reservation ID
+    const reservationId = table.services[service].reservation.id;
+    
+    // Update the table status locally
     setTables(tables.map(t => {
       if (t.id === tableId) {
         return {
           ...t,
-          available: true,
-          reservation: null,
-          service: null
+          services: {
+            ...t.services,
+            [service]: {
+              available: true,
+              reservation: null
+            }
+          }
         };
       }
       return t;
     }));
-    
-    // Get the reservation ID
-    const reservationId = table.reservation.id;
     
     // Update the reservation in the database to remove table assignment
     try {
@@ -150,7 +174,8 @@ const TableStatusGrid = ({ reservations = [] }) => {
         },
         credentials: 'include',
         body: JSON.stringify({ 
-          table: '' // Remove table assignment
+          table: '', // Remove table assignment
+          service: '' // Remove service assignment
         }),
       });
 
@@ -160,8 +185,7 @@ const TableStatusGrid = ({ reservations = [] }) => {
       
     } catch (error) {
       console.error('Error freeing table:', error);
-      // Revert the local state change if API call fails
-      setTables(tables); // This will reset to the previous state
+      alert('Failed to update reservation status. Please try again.');
     }
   };
 
@@ -170,13 +194,18 @@ const TableStatusGrid = ({ reservations = [] }) => {
     // Create a copy of the current tables
     const updatedTables = [...tables];
     
-    // First reset all tables that don't have a current reservation
+    // First reset all table services that don't have a current reservation
     updatedTables.forEach(table => {
-      if (table.reservation && !reservations.find(r => r.id === table.reservation.id)) {
-        table.available = true;
-        table.reservation = null;
-        table.service = null;
-      }
+      // For each service, check if we need to reset
+      Object.keys(table.services).forEach(service => {
+        if (table.services[service].reservation && 
+            !reservations.find(r => r.id === table.services[service].reservation.id)) {
+          table.services[service] = {
+            available: true,
+            reservation: null
+          };
+        }
+      });
     });
     
     // Then update tables based on current reservations
@@ -187,19 +216,18 @@ const TableStatusGrid = ({ reservations = [] }) => {
         const tableIndex = updatedTables.findIndex(t => t.id === tableId);
         
         if (tableIndex !== -1) {
-          // Determine service based on reservation time
-          const service = getServiceFromTime(reservation.time);
+          // Determine which service this reservation is for
+          const serviceType = getServiceInfo(reservation) || 'first'; // Default to first service if not specified
           
-          updatedTables[tableIndex] = {
-            ...updatedTables[tableIndex],
+          // Update the table for this specific service
+          updatedTables[tableIndex].services[serviceType] = {
             available: false,
             reservation: {
               id: reservation.id,
               name: reservation.name,
               time: reservation.time,
               guests: reservation.guests
-            },
-            service: service
+            }
           };
         }
       }
@@ -208,74 +236,123 @@ const TableStatusGrid = ({ reservations = [] }) => {
     setTables(updatedTables);
   }, [reservations]);
 
-  // Filter tables by service
-  const filteredTables = selectedService === 'all' 
-    ? tables 
-    : tables.filter(table => !table.service || table.service === selectedService);
-
-  // Render a table button with improved UI
-  const renderTable = (table) => {
-    const isOccupied = !table.available && table.reservation;
+  // Filter tables based on selected service
+  const filteredTables = tables.filter(table => {
+    if (selectedService === 'all') {
+      return true;
+    }
     
-    // Determine the color class based on table status and service
-    let tableColorClass = '';
-    if (isOccupied) {
-      if (table.service === 'first') {
-        tableColorClass = 'bg-red-100 hover:bg-red-200 text-red-800';
-      } else if (table.service === 'second') {
-        tableColorClass = 'bg-purple-100 hover:bg-purple-200 text-purple-800';
-      } else {
-        tableColorClass = 'bg-red-100 hover:bg-red-200 text-red-800';
-      }
+    // For a specific service, show tables if they have a reservation for that service
+    // or if they are available for that service
+    return !table.services[selectedService].available || 
+           table.services[selectedService].reservation !== null;
+  });
+
+  // Render a table with potentially multiple service statuses
+  const renderTable = (table) => {
+    // Determine if the table is occupied for either service
+    const firstServiceOccupied = !table.services.first.available && table.services.first.reservation;
+    const secondServiceOccupied = !table.services.second.available && table.services.second.reservation;
+    
+    // Determine the color class based on table status
+    // If both services are occupied, we'll use a split background
+    let tableClass = '';
+    
+    if (firstServiceOccupied && secondServiceOccupied) {
+      tableClass = 'bg-gradient-to-b from-red-100 to-purple-100 hover:from-red-200 hover:to-purple-200';
+    } else if (firstServiceOccupied) {
+      tableClass = 'bg-red-100 hover:bg-red-200 text-red-800';
+    } else if (secondServiceOccupied) {
+      tableClass = 'bg-purple-100 hover:bg-purple-200 text-purple-800';
     } else {
-      tableColorClass = 'bg-green-100 hover:bg-green-200 text-green-800';
+      tableClass = 'bg-green-100 hover:bg-green-200 text-green-800';
     }
     
     return (
       <div
         key={table.id}
-        className={`relative w-20 h-20 flex flex-col justify-start text-sm font-medium rounded-lg cursor-pointer overflow-hidden transition-all hover:shadow-md ${tableColorClass}`}
-        onClick={() => toggleTableStatus(table.id)}
+        className={`relative w-20 h-20 flex flex-col justify-start text-sm font-medium rounded-lg cursor-pointer overflow-hidden transition-all hover:shadow-md ${tableClass}`}
       >
         {/* Table number (larger and more prominent) */}
         <div className="absolute top-0 left-0 w-full py-1 px-2 text-center font-bold text-lg bg-white bg-opacity-50">
           {table.name}
         </div>
         
-        {/* Service indicator */}
-        {isOccupied && table.service && (
+        {/* Indicate if table has multiple services occupied */}
+        {firstServiceOccupied && secondServiceOccupied && (
           <div className="absolute top-0 right-0 p-1">
             <span className="flex items-center">
-              <Clock size={10} className="mr-1" />
-              <span className="text-xs">{table.service === 'first' ? '1st' : '2nd'}</span>
+              <Coffee size={10} className="mr-1" />
+              <span className="text-xs">Both</span>
             </span>
           </div>
         )}
         
-        {/* Reservation details (if occupied) */}
-        {isOccupied && (
-          <div className="mt-8 px-1 w-full flex flex-col items-center">
-            {/* Guest info */}
-            <div className="text-xs font-medium truncate w-full text-center mt-1">
-              {table.reservation.name.split(' ')[0]} {/* Show just first name to save space */}
-            </div>
-            
-            {/* Guest count with icon */}
-            <div className="flex items-center justify-center space-x-1 mt-1">
-              <Users size={10} />
-              <span className="text-xs">{table.reservation.guests}</span>
-            </div>
-            
-            {/* Checkout button (small X icon in bottom right) */}
-            {isOccupied && (
-              <button 
-                className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white hover:bg-blue-600"
-                onClick={(e) => freeTable(table.id, e)}
-                title="Clear table"
-              >
-                <X size={12} />
-              </button>
+        {/* Reservation details for first service */}
+        {firstServiceOccupied && (
+          <div className={`${secondServiceOccupied ? 'mt-6' : 'mt-8'} px-1 w-full flex flex-col items-center`}>
+            {secondServiceOccupied ? (
+              <div className="bg-red-200 w-full text-center text-xs py-0.5">1st</div>
+            ) : (
+              <div className="absolute top-0 right-0 p-1">
+                <span className="flex items-center">
+                  <Clock size={10} className="mr-1" />
+                  <span className="text-xs">1st</span>
+                </span>
+              </div>
             )}
+            
+            <div className="text-xs font-medium truncate w-full text-center">
+              {table.services.first.reservation.name.split(' ')[0]}
+            </div>
+            
+            <div className="flex items-center justify-center space-x-1">
+              <Users size={10} />
+              <span className="text-xs">{table.services.first.reservation.guests}</span>
+            </div>
+            
+            {/* Clear button for first service */}
+            <button 
+              className="absolute bottom-1 left-1 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white hover:bg-blue-600"
+              onClick={(e) => freeTable(table.id, 'first', e)}
+              title="Clear 1st service"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        )}
+        
+        {/* Reservation details for second service */}
+        {secondServiceOccupied && (
+          <div className={`${firstServiceOccupied ? 'mt-14' : 'mt-8'} px-1 w-full flex flex-col items-center`}>
+            {firstServiceOccupied ? (
+              <div className="bg-purple-200 w-full text-center text-xs py-0.5">2nd</div>
+            ) : (
+              <div className="absolute top-0 right-0 p-1">
+                <span className="flex items-center">
+                  <Clock size={10} className="mr-1" />
+                  <span className="text-xs">2nd</span>
+                </span>
+              </div>
+            )}
+            
+            <div className="text-xs font-medium truncate w-full text-center">
+              {table.services.second.reservation.name.split(' ')[0]}
+            </div>
+            
+            <div className="flex items-center justify-center space-x-1">
+              <Users size={10} />
+              <span className="text-xs">{table.services.second.reservation.guests}</span>
+            </div>
+            
+            {/* Clear button for second service */}
+            <button 
+              className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white hover:bg-blue-600"
+              onClick={(e) => freeTable(table.id, 'second', e)}
+              title="Clear 2nd service"
+            >
+              <X size={12} />
+            </button>
           </div>
         )}
       </div>
@@ -410,6 +487,10 @@ const TableStatusGrid = ({ reservations = [] }) => {
             <div className="flex items-center">
               <div className="w-5 h-5 bg-purple-100 rounded-md mr-2"></div>
               <span className="text-gray-700">2nd Service (14:00-15:30)</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-5 h-5 bg-gradient-to-b from-red-100 to-purple-100 rounded-md mr-2"></div>
+              <span className="text-gray-700">Both Services</span>
             </div>
             <div className="flex items-center">
               <div className="relative w-5 h-5 flex items-center justify-center bg-red-100 rounded-md mr-2">

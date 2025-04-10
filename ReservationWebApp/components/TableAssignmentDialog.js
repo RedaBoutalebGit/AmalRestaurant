@@ -1,10 +1,11 @@
 // components/TableAssignmentDialog.js
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Table, Clock } from 'lucide-react';
+import { X, Table, Clock, Info } from 'lucide-react';
 
 const TableAssignmentDialog = ({ reservation, onClose, onAssign }) => {
   const [tableNumber, setTableNumber] = useState(reservation.table || '');
   const [serviceTime, setServiceTime] = useState('');
+  const [notes, setNotes] = useState(reservation.notes || '');
   const inputRef = useRef(null);
   
   // Define service times
@@ -16,13 +17,28 @@ const TableAssignmentDialog = ({ reservation, onClose, onAssign }) => {
   // Determine initial service based on reservation time
   useEffect(() => {
     if (reservation.time) {
-      const hour = parseInt(reservation.time.split(':')[0]);
-      const isPM = reservation.time.toLowerCase().includes('pm');
-      const timeHour = isPM && hour < 12 ? hour + 12 : hour;
+      // Check if the time includes AM/PM format or is in 24-hour format
+      const timeStr = reservation.time.toLowerCase();
+      let hour = 0;
       
-      if (timeHour >= 12 && timeHour < 14) {
+      if (timeStr.includes('am') || timeStr.includes('pm')) {
+        // Handle 12-hour format (e.g., "2:30 PM")
+        const isPM = timeStr.includes('pm');
+        const timeParts = timeStr.replace(/(am|pm)/i, '').trim().split(':');
+        hour = parseInt(timeParts[0]);
+        
+        // Convert to 24-hour format
+        if (isPM && hour < 12) hour += 12;
+        if (!isPM && hour === 12) hour = 0;
+      } else {
+        // Handle 24-hour format (e.g., "14:30")
+        hour = parseInt(reservation.time.split(':')[0]);
+      }
+      
+      // Set service based on hour
+      if (hour >= 12 && hour < 14) {
         setServiceTime('first');
-      } else if (timeHour >= 14 && timeHour < 15.5) {
+      } else if (hour >= 14 && hour < 15.5) {
         setServiceTime('second');
       } else {
         // Default to first service if time doesn't match
@@ -43,12 +59,20 @@ const TableAssignmentDialog = ({ reservation, onClose, onAssign }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    // Validate table number
+    if (!tableNumber || tableNumber === '') {
+      alert('Please enter a valid table number');
+      return;
+    }
+    
     // Include service time in notes if it's not already in the reservation time
-    let updatedNotes = reservation.notes || '';
+    let updatedNotes = notes;
     const serviceInfo = serviceTimes.find(s => s.id === serviceTime);
     
     if (serviceInfo) {
       const serviceNote = `Table ${tableNumber} assigned for ${serviceInfo.name} (${serviceInfo.time})`;
+      
+      // Only add the service note if it's not already there
       if (!updatedNotes.includes(serviceInfo.name)) {
         updatedNotes = updatedNotes ? `${updatedNotes}\n${serviceNote}` : serviceNote;
       }
@@ -58,9 +82,14 @@ const TableAssignmentDialog = ({ reservation, onClose, onAssign }) => {
     onAssign(reservation.id, tableNumber, updatedNotes, serviceTime);
   };
 
-  // Handle input changes without losing focus
+  // Handle input changes
   const handleInputChange = (e) => {
     setTableNumber(e.target.value);
+  };
+  
+  // Handle notes changes
+  const handleNotesChange = (e) => {
+    setNotes(e.target.value);
   };
 
   // Handle key press events
@@ -138,6 +167,24 @@ const TableAssignmentDialog = ({ reservation, onClose, onAssign }) => {
                     <span className="text-xs text-gray-500">{service.time}</span>
                   </div>
                 ))}
+              </div>
+            </div>
+            
+            <div className="mb-4">
+              <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
+                Notes
+              </label>
+              <textarea
+                id="notes"
+                value={notes}
+                onChange={handleNotesChange}
+                rows={3}
+                className="w-full border rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                placeholder="Add any special notes or requests"
+              />
+              <div className="mt-1 flex items-center text-xs text-gray-500">
+                <Info className="w-3 h-3 mr-1" />
+                <span>Table assignment will be automatically added to notes</span>
               </div>
             </div>
           </div>

@@ -94,8 +94,41 @@ export default async function handler(req, res) {
 
      // If it's a service update along with table assignment
   if (updates.service !== undefined || updates.table !== undefined) {
+    // If we're removing a table assignment
+    if (updates.table === '') {
+      // Clear the table assignment
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: process.env.SHEET_ID,
+        range: `Reservations!K${rowIndex + 1}`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [['']]
+        }
+      });
+      
+      // Also clear the service if it's being explicitly set to empty
+      if (updates.service === '') {
+        // Make sure column P exists
+        if (rows[0].length >= 16) {
+          await sheets.spreadsheets.values.update({
+            spreadsheetId: process.env.SHEET_ID,
+            range: `Reservations!P${rowIndex + 1}`,
+            valueInputOption: 'RAW',
+            requestBody: {
+              values: [['']]
+            }
+          });
+        }
+      }
+      
+      return res.status(200).json({ 
+        message: 'Table assignment removed successfully',
+        updates: updates
+      });
+    }
+    
     // Update table if provided
-    if (updates.table !== undefined) {
+    if (updates.table) {
       await sheets.spreadsheets.values.update({
         spreadsheetId: process.env.SHEET_ID,
         range: `Reservations!K${rowIndex + 1}`,
@@ -107,10 +140,9 @@ export default async function handler(req, res) {
     }
     
     // Update service if provided
-    if (updates.service !== undefined) {
-      // Make sure we actually have a column P in the sheet
+    if (updates.service) {
+      // Ensure column P exists
       if (rows[0].length < 16) {
-        // Need to append column for service information
         await sheets.spreadsheets.values.update({
           spreadsheetId: process.env.SHEET_ID,
           range: `Reservations!P1`,
@@ -121,6 +153,7 @@ export default async function handler(req, res) {
         });
       }
       
+      // Update the service
       await sheets.spreadsheets.values.update({
         spreadsheetId: process.env.SHEET_ID,
         range: `Reservations!P${rowIndex + 1}`,
@@ -129,6 +162,30 @@ export default async function handler(req, res) {
           values: [[updates.service]]
         }
       });
+      
+      // If we're assigning a service, make sure the notes reflect this
+      if (updates.notes === undefined && updates.service) {
+        const currentNotes = rows[rowIndex][9] || '';
+        const serviceInfo = updates.service === 'first' ? 
+          '1st Service (12:00-14:00)' : 
+          '2nd Service (14:00-15:30)';
+          
+        // Only add if not already in notes
+        if (!currentNotes.includes(serviceInfo)) {
+          const updatedNotes = currentNotes ? 
+            `${currentNotes}\nTable ${updates.table} assigned for ${serviceInfo}` :
+            `Table ${updates.table} assigned for ${serviceInfo}`;
+            
+          await sheets.spreadsheets.values.update({
+            spreadsheetId: process.env.SHEET_ID,
+            range: `Reservations!J${rowIndex + 1}`,
+            valueInputOption: 'RAW',
+            requestBody: {
+              values: [[updatedNotes]]
+            }
+          });
+        }
+      }
     }
     
     // Update notes if provided
@@ -148,6 +205,7 @@ export default async function handler(req, res) {
       updates: updates
     });
   }
+
 
      // If it's a simple status or table or check-in update
      if (updates.status !== undefined || updates.table !== undefined || updates.checkInStatus !== undefined) {
