@@ -9,6 +9,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import ReservationAnalytics from './ReservationAnalytics';
 import Notifications from './Notification';
 import EditReservationDialog from './EditReservationDialog';
+import TableAssignmentDialog from './TableAssignmentDialog';
 
 const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [filterDate, setFilterDate] = useState("");
@@ -249,46 +250,11 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   // Table Assignment Dialog Component
   const TableAssignDialog = ({ reservation }) => (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-blue-600">Assign Table</h3>
-          <button 
-            onClick={() => setShowTableDialog(false)}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="mb-6">
-          <p className="text-gray-700">Assign a table for {reservation.name}'s party of {reservation.guests}</p>
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700">Table Number</label>
-            <input
-              type="number"
-              min="1"
-              value={selectedTable}
-              onChange={(e) => setSelectedTable(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter table number"
-            />
-          </div>
-        </div>
-        <div className="flex justify-end space-x-4">
-          <button
-            onClick={() => setShowTableDialog(false)}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => handleTableAssign(reservation.id, selectedTable)}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center"
-          >
-            <Table className="w-4 h-4 mr-2" />
-            Assign Table
-          </button>
-        </div>
-      </div>
+      <TableAssignmentDialog
+        reservation={reservation}
+        onClose={() => setShowTableDialog(false)}
+        onAssign={handleTableAssign}
+      />
     </div>
   );
 
@@ -329,7 +295,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     }
   };
   
-  const handleTableAssign = async (reservationId, tableNumber) => {
+  const handleTableAssign = async (reservationId, tableNumber, updatedNotes) => {
     try {
       const response = await fetch(`/api/reservations/${reservationId}`, {
         method: 'PATCH',
@@ -337,9 +303,12 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ table: tableNumber }),
+        body: JSON.stringify({ 
+          table: tableNumber,
+          notes: updatedNotes 
+        }),
       });
-
+  
       if (!response.ok) throw new Error('Failed to assign table');
       await onStatusUpdate();
       setShowTableDialog(false);

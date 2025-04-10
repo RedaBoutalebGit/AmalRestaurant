@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight, Users, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Users, X, Clock } from 'lucide-react';
 
 const TableStatusGrid = ({ reservations = [] }) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [selectedService, setSelectedService] = useState('all');
+  
+  // Define service time slots
+  const serviceSlots = {
+    first: { name: "1st Service", time: "12:00 - 14:00" },
+    second: { name: "2nd Service", time: "14:00 - 15:30" }
+  };
   
   // Tables organized by section
   const [tables, setTables] = useState([
@@ -12,7 +19,8 @@ const TableStatusGrid = ({ reservations = [] }) => {
       name: String(i + 1),
       available: true,
       reservation: null,
-      section: 'Garden A (1-10)'
+      section: 'Garden A (1-10)',
+      service: null
     })),
     
     // Tables 20-28: Garden A
@@ -21,7 +29,8 @@ const TableStatusGrid = ({ reservations = [] }) => {
       name: String(i + 20),
       available: true,
       reservation: null,
-      section: 'Garden A (20-28)'
+      section: 'Garden A (20-28)',
+      service: null
     })),
     
     // Tables 30-39: Garden B
@@ -30,7 +39,8 @@ const TableStatusGrid = ({ reservations = [] }) => {
       name: String(i + 30),
       available: true,
       reservation: null,
-      section: 'Garden B'
+      section: 'Garden B',
+      service: null
     })),
     
     // Tables 40-43: Hall
@@ -39,7 +49,8 @@ const TableStatusGrid = ({ reservations = [] }) => {
       name: String(i + 40),
       available: true,
       reservation: null,
-      section: 'Hall'
+      section: 'Hall',
+      service: null
     })),
     
     // Tables 50-57: Salon
@@ -48,7 +59,8 @@ const TableStatusGrid = ({ reservations = [] }) => {
       name: String(i + 50),
       available: true,
       reservation: null,
-      section: 'Salon'
+      section: 'Salon',
+      service: null
     })),
     
     // Tables 60-67: Garden A
@@ -57,9 +69,32 @@ const TableStatusGrid = ({ reservations = [] }) => {
       name: String(i + 60),
       available: true,
       reservation: null,
-      section: 'Garden A (60-67)'
+      section: 'Garden A (60-67)',
+      service: null
     }))
   ]);
+
+  // Determine service based on reservation time
+  const getServiceFromTime = (time) => {
+    if (!time) return null;
+    
+    // Convert time to 24-hour format if it's in 12-hour format
+    let hour = parseInt(time.split(':')[0]);
+    const isPM = time.toLowerCase().includes('pm');
+    
+    if (isPM && hour < 12) {
+      hour += 12;
+    }
+    
+    // Check which service the time falls into
+    if (hour >= 12 && hour < 14) {
+      return 'first';
+    } else if (hour >= 14 && hour < 15.5) {
+      return 'second';
+    }
+    
+    return null;
+  };
 
   // Toggle the expanded state of the section
   const toggleExpanded = () => {
@@ -74,7 +109,8 @@ const TableStatusGrid = ({ reservations = [] }) => {
           ...table,
           available: !table.available,
           // Clear reservation if making available
-          reservation: !table.available ? null : table.reservation
+          reservation: !table.available ? null : table.reservation,
+          service: !table.available ? null : table.service
         };
       }
       return table;
@@ -95,7 +131,8 @@ const TableStatusGrid = ({ reservations = [] }) => {
         return {
           ...t,
           available: true,
-          reservation: null
+          reservation: null,
+          service: null
         };
       }
       return t;
@@ -138,6 +175,7 @@ const TableStatusGrid = ({ reservations = [] }) => {
       if (table.reservation && !reservations.find(r => r.id === table.reservation.id)) {
         table.available = true;
         table.reservation = null;
+        table.service = null;
       }
     });
     
@@ -149,6 +187,9 @@ const TableStatusGrid = ({ reservations = [] }) => {
         const tableIndex = updatedTables.findIndex(t => t.id === tableId);
         
         if (tableIndex !== -1) {
+          // Determine service based on reservation time
+          const service = getServiceFromTime(reservation.time);
+          
           updatedTables[tableIndex] = {
             ...updatedTables[tableIndex],
             available: false,
@@ -157,7 +198,8 @@ const TableStatusGrid = ({ reservations = [] }) => {
               name: reservation.name,
               time: reservation.time,
               guests: reservation.guests
-            }
+            },
+            service: service
           };
         }
       }
@@ -166,24 +208,49 @@ const TableStatusGrid = ({ reservations = [] }) => {
     setTables(updatedTables);
   }, [reservations]);
 
+  // Filter tables by service
+  const filteredTables = selectedService === 'all' 
+    ? tables 
+    : tables.filter(table => !table.service || table.service === selectedService);
+
   // Render a table button with improved UI
   const renderTable = (table) => {
     const isOccupied = !table.available && table.reservation;
     
+    // Determine the color class based on table status and service
+    let tableColorClass = '';
+    if (isOccupied) {
+      if (table.service === 'first') {
+        tableColorClass = 'bg-red-100 hover:bg-red-200 text-red-800';
+      } else if (table.service === 'second') {
+        tableColorClass = 'bg-purple-100 hover:bg-purple-200 text-purple-800';
+      } else {
+        tableColorClass = 'bg-red-100 hover:bg-red-200 text-red-800';
+      }
+    } else {
+      tableColorClass = 'bg-green-100 hover:bg-green-200 text-green-800';
+    }
+    
     return (
       <div
         key={table.id}
-        className={`relative w-20 h-20 flex flex-col justify-start text-sm font-medium rounded-lg cursor-pointer overflow-hidden transition-all hover:shadow-md
-          ${isOccupied 
-            ? 'bg-red-100 hover:bg-red-200 text-red-800' 
-            : 'bg-green-100 hover:bg-green-200 text-green-800'
-          }`}
+        className={`relative w-20 h-20 flex flex-col justify-start text-sm font-medium rounded-lg cursor-pointer overflow-hidden transition-all hover:shadow-md ${tableColorClass}`}
         onClick={() => toggleTableStatus(table.id)}
       >
         {/* Table number (larger and more prominent) */}
         <div className="absolute top-0 left-0 w-full py-1 px-2 text-center font-bold text-lg bg-white bg-opacity-50">
           {table.name}
         </div>
+        
+        {/* Service indicator */}
+        {isOccupied && table.service && (
+          <div className="absolute top-0 right-0 p-1">
+            <span className="flex items-center">
+              <Clock size={10} className="mr-1" />
+              <span className="text-xs">{table.service === 'first' ? '1st' : '2nd'}</span>
+            </span>
+          </div>
+        )}
         
         {/* Reservation details (if occupied) */}
         {isOccupied && (
@@ -216,14 +283,19 @@ const TableStatusGrid = ({ reservations = [] }) => {
   };
 
   // Function to render a section of tables
-  const renderTableSection = (sectionName, tables) => (
-    <div className="bg-gray-100 rounded-lg p-4">
-      <div className="text-md font-semibold mb-3 text-center">{sectionName}</div>
-      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 justify-items-center">
-        {tables.map(renderTable)}
+  const renderTableSection = (sectionName, filteredTables) => {
+    const sectionTables = filteredTables.filter(t => t.section === sectionName);
+    if (sectionTables.length === 0) return null;
+    
+    return (
+      <div className="bg-gray-100 rounded-lg p-4">
+        <div className="text-md font-semibold mb-3 text-center">{sectionName}</div>
+        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 justify-items-center">
+          {sectionTables.map(renderTable)}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="bg-white shadow rounded-lg mb-6 overflow-hidden">
@@ -245,42 +317,83 @@ const TableStatusGrid = ({ reservations = [] }) => {
       {/* Collapsible content */}
       {isExpanded && (
         <div className="p-4">
+          {/* Service filter */}
+          <div className="flex justify-center mb-4">
+            <div className="bg-white rounded-lg shadow-sm border p-1 inline-flex">
+              <button
+                onClick={() => setSelectedService('all')}
+                className={`px-4 py-2 rounded-md flex items-center ${
+                  selectedService === 'all' 
+                    ? 'bg-gray-100 text-gray-800 font-medium' 
+                    : 'text-gray-500 hover:bg-gray-50'
+                } transition-colors`}
+                title="Show all tables"
+              >
+                All Tables
+              </button>
+              <button
+                onClick={() => setSelectedService('first')}
+                className={`px-4 py-2 rounded-md flex items-center ${
+                  selectedService === 'first' 
+                    ? 'bg-red-100 text-red-800 font-medium' 
+                    : 'text-gray-500 hover:bg-gray-50'
+                } transition-colors`}
+                title="Show 1st service tables"
+              >
+                <Clock className="w-4 h-4 mr-2" />
+                1st Service (12:00-14:00)
+              </button>
+              <button
+                onClick={() => setSelectedService('second')}
+                className={`px-4 py-2 rounded-md flex items-center ${
+                  selectedService === 'second' 
+                    ? 'bg-purple-100 text-purple-800 font-medium' 
+                    : 'text-gray-500 hover:bg-gray-50'
+                } transition-colors`}
+                title="Show 2nd service tables"
+              >
+                <Clock className="w-4 h-4 mr-2" />
+                2nd Service (14:00-15:30)
+              </button>
+            </div>
+          </div>
+          
           {/* Grid layout with 2 columns on larger screens */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Garden A (1-10) */}
             {renderTableSection(
               "Garden A (1-10)", 
-              tables.filter(t => t.section === 'Garden A (1-10)')
+              filteredTables
             )}
             
             {/* Garden A (20-28) */}
             {renderTableSection(
               "Garden A (20-28)", 
-              tables.filter(t => t.section === 'Garden A (20-28)')
+              filteredTables
             )}
             
             {/* Garden A (60-67) */}
             {renderTableSection(
               "Garden A (60-67)", 
-              tables.filter(t => t.section === 'Garden A (60-67)')
+              filteredTables
             )}
             
             {/* Garden B (30-39) */}
             {renderTableSection(
-              "Garden B (30-39)", 
-              tables.filter(t => t.section === 'Garden B')
+              "Garden B", 
+              filteredTables
             )}
             
             {/* Hall (40-43) */}
             {renderTableSection(
-              "Hall (40-43)", 
-              tables.filter(t => t.section === 'Hall')
+              "Hall", 
+              filteredTables
             )}
             
             {/* Salon (50-57) */}
             {renderTableSection(
-              "Salon (50-57)", 
-              tables.filter(t => t.section === 'Salon')
+              "Salon", 
+              filteredTables
             )}
           </div>
 
@@ -292,7 +405,11 @@ const TableStatusGrid = ({ reservations = [] }) => {
             </div>
             <div className="flex items-center">
               <div className="w-5 h-5 bg-red-100 rounded-md mr-2"></div>
-              <span className="text-gray-700">Occupied</span>
+              <span className="text-gray-700">1st Service (12:00-14:00)</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-5 h-5 bg-purple-100 rounded-md mr-2"></div>
+              <span className="text-gray-700">2nd Service (14:00-15:30)</span>
             </div>
             <div className="flex items-center">
               <div className="relative w-5 h-5 flex items-center justify-center bg-red-100 rounded-md mr-2">
