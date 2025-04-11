@@ -259,8 +259,34 @@ export default async function handler(req, res) {
                 values: [['cancelled']]
               }
             });
+            
+            // Add cancellation reason if provided
+            if (updates.cancellationReason) {
+              // First check if a CancellationReason column exists (column Q or index 16)
+              // If we need to create it:
+              if (rows[0].length < 17) {
+                await sheets.spreadsheets.values.update({
+                  spreadsheetId: process.env.SHEET_ID,
+                  range: `Reservations!Q1`,
+                  valueInputOption: 'RAW',
+                  requestBody: {
+                    values: [['CancellationReason']]
+                  }
+                });
+              }
+              
+              // Update the CancellationReason column
+              await sheets.spreadsheets.values.update({
+                spreadsheetId: process.env.SHEET_ID,
+                range: `Reservations!Q${rowIndex + 1}`,
+                valueInputOption: 'RAW',
+                requestBody: {
+                  values: [[updates.cancellationReason]]
+                }
+              });
+            }
         
-            // Queue cancellation email
+            // Queue cancellation email - now with the reason included
             await sheets.spreadsheets.values.update({
               spreadsheetId: process.env.SHEET_ID,
               range: `Reservations!L${rowIndex + 1}`,
@@ -269,6 +295,33 @@ export default async function handler(req, res) {
                 values: [['queuedCancellation']]
               }
             });
+            
+            // Store reservation data in a hidden column for the email
+            if (updates.cancellationReason) {
+              // First, serialize the reason safely
+              const serializedReason = JSON.stringify({ reason: updates.cancellationReason });
+              
+              // Store in a CancellationData column (R)
+              if (rows[0].length < 18) {
+                await sheets.spreadsheets.values.update({
+                  spreadsheetId: process.env.SHEET_ID,
+                  range: `Reservations!R1`,
+                  valueInputOption: 'RAW',
+                  requestBody: {
+                    values: [['CancellationData']]
+                  }
+                });
+              }
+              
+              await sheets.spreadsheets.values.update({
+                spreadsheetId: process.env.SHEET_ID,
+                range: `Reservations!R${rowIndex + 1}`,
+                valueInputOption: 'RAW',
+                requestBody: {
+                  values: [[serializedReason]]
+                }
+              });
+            }
           } catch (error) {
             console.error('Error queuing cancellation email:', error);
             throw error;

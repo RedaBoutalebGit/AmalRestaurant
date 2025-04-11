@@ -10,6 +10,9 @@ import ReservationAnalytics from './ReservationAnalytics';
 import Notifications from './Notification';
 import EditReservationDialog from './EditReservationDialog';
 import TableAssignmentDialog from './TableAssignmentDialog';
+import CancellationReasonDialog from './CancellationReasonDialog';
+
+
 
 const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [filterDate, setFilterDate] = useState("");
@@ -28,6 +31,8 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [showPastReservations, setShowPastReservations] = useState(false);
   const [filterCheckIn, setFilterCheckIn] = useState('all'); // 'all', 'arrived', 'expected'
   const [showFilters, setShowFilters] = useState(false);
+  const [showCancellationDialog, setShowCancellationDialog] = useState(false);
+const [cancellationReason, setCancellationReason] = useState('');
 
   // Set selectedDate when filterDate changes from elsewhere
   useEffect(() => {
@@ -57,21 +62,28 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
     }
   };
 
-  const handleStatusUpdate = async (reservationId, newStatus) => {
+  const handleStatusUpdate = async (reservationId, newStatus, reason = null) => {
     setUpdatingId(reservationId);
     try {
+      const requestBody = { 
+        status: newStatus,
+        sendEmail: newStatus === 'confirmed' // This triggers the email for confirmations
+      };
+      
+      // Add cancellation reason if provided
+      if (newStatus === 'cancelled' && reason) {
+        requestBody.cancellationReason = reason;
+      }
+      
       const response = await fetch(`/api/reservations/${reservationId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ 
-          status: newStatus,
-          sendEmail: newStatus === 'confirmed' // This triggers the email
-        }),
+        body: JSON.stringify(requestBody),
       });
-
+  
       if (!response.ok) throw new Error('Failed to update status');
       await onStatusUpdate();
     } catch (error) {
@@ -81,6 +93,15 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
       setUpdatingId(null);
     }
   };
+
+    // 4. Add this handler for cancellation confirmation:
+const handleCancellationConfirm = async (reason) => {
+  if (selectedReservation) {
+    await handleStatusUpdate(selectedReservation.id, 'cancelled', reason);
+    setShowCancellationDialog(false);
+    setCancellationReason('');
+  }
+};
 
   const handleDelete = async (id) => {
     setDeletingId(id);
@@ -344,6 +365,16 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   return (
     <div className="space-y-6 p-4 md:p-6 bg-gray-50 min-h-screen transition-all">
       <Notifications reservations={reservations} />
+      {showCancellationDialog && selectedReservation && (
+  <CancellationReasonDialog
+    reservation={selectedReservation}
+    onClose={() => {
+      setShowCancellationDialog(false);
+      setSelectedReservation(null);
+    }}
+    onConfirm={handleCancellationConfirm}
+  />
+)}
       {showDeleteConfirm && <DeleteConfirmDialog reservation={selectedReservation} />}
       {showTableDialog && selectedReservation && (
   <TableAssignmentDialog
@@ -770,13 +801,16 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
                     
                     {reservation.status !== 'cancelled' && (
                       <button
-                        onClick={() => handleStatusUpdate(reservation.id, 'cancelled')}
-                        className="flex items-center px-3 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
-                        title="Cancel this reservation"
-                      >
-                        <X className="w-4 h-4 mr-1" />
-                        Cancel
-                      </button>
+                      onClick={() => {
+                        setSelectedReservation(reservation);
+                        setShowCancellationDialog(true);
+                      }}
+                      className="flex items-center px-3 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+                      title="Cancel this reservation"
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Cancel
+                    </button>
                     )}
                     
                     <button
