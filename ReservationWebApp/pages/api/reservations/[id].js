@@ -89,123 +89,125 @@ export default async function handler(req, res) {
      const rowIndex = rows.findIndex(row => row[0] === id);
 
      if (rowIndex === -1) {
+       console.error(`Reservation with ID ${id} not found`);
        return res.status(404).json({ error: 'Reservation not found' });
      }
 
+     console.log(`Found reservation at row index ${rowIndex + 1}`);
+
      // If it's a service update along with table assignment
-  if (updates.service !== undefined || updates.table !== undefined) {
-    // If we're removing a table assignment
-    if (updates.table === '') {
-      // Clear the table assignment
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: process.env.SHEET_ID,
-        range: `Reservations!K${rowIndex + 1}`,
-        valueInputOption: 'RAW',
-        requestBody: {
-          values: [['']]
-        }
-      });
-      
-      // Also clear the service if it's being explicitly set to empty
-      if (updates.service === '') {
-        // Make sure column P exists
-        if (rows[0].length >= 16) {
-          await sheets.spreadsheets.values.update({
-            spreadsheetId: process.env.SHEET_ID,
-            range: `Reservations!P${rowIndex + 1}`,
-            valueInputOption: 'RAW',
-            requestBody: {
-              values: [['']]
-            }
-          });
-        }
-      }
-      
-      return res.status(200).json({ 
-        message: 'Table assignment removed successfully',
-        updates: updates
-      });
-    }
-    
-    // Update table if provided
-    if (updates.table) {
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: process.env.SHEET_ID,
-        range: `Reservations!K${rowIndex + 1}`,
-        valueInputOption: 'RAW',
-        requestBody: {
-          values: [[updates.table]]
-        }
-      });
-    }
-    
-    // Update service if provided
-    if (updates.service) {
-      // Ensure column P exists
-      if (rows[0].length < 16) {
-        await sheets.spreadsheets.values.update({
-          spreadsheetId: process.env.SHEET_ID,
-          range: `Reservations!P1`,
-          valueInputOption: 'RAW',
-          requestBody: {
-            values: [['Service']]
-          }
-        });
-      }
-      
-      // Update the service
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: process.env.SHEET_ID,
-        range: `Reservations!P${rowIndex + 1}`,
-        valueInputOption: 'RAW',
-        requestBody: {
-          values: [[updates.service]]
-        }
-      });
-      
-      // If we're assigning a service, make sure the notes reflect this
-      if (updates.notes === undefined && updates.service) {
-        const currentNotes = rows[rowIndex][9] || '';
-        const serviceInfo = updates.service === 'first' ? 
-          '1st Service (12:00-14:00)' : 
-          '2nd Service (14:00-15:30)';
-          
-        // Only add if not already in notes
-        if (!currentNotes.includes(serviceInfo)) {
-          const updatedNotes = currentNotes ? 
-            `${currentNotes}\nTable ${updates.table} assigned for ${serviceInfo}` :
-            `Table ${updates.table} assigned for ${serviceInfo}`;
-            
-          await sheets.spreadsheets.values.update({
-            spreadsheetId: process.env.SHEET_ID,
-            range: `Reservations!J${rowIndex + 1}`,
-            valueInputOption: 'RAW',
-            requestBody: {
-              values: [[updatedNotes]]
-            }
-          });
-        }
-      }
-    }
-    
-    // Update notes if provided
-    if (updates.notes !== undefined) {
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: process.env.SHEET_ID,
-        range: `Reservations!J${rowIndex + 1}`,
-        valueInputOption: 'RAW',
-        requestBody: {
-          values: [[updates.notes]]
-        }
-      });
-    }
+     if (updates.service !== undefined || updates.table !== undefined) {
+       // If we're removing a table assignment
+       if (updates.table === '') {
+         // Clear the table assignment
+         await sheets.spreadsheets.values.update({
+           spreadsheetId: process.env.SHEET_ID,
+           range: `Reservations!K${rowIndex + 1}`,
+           valueInputOption: 'RAW',
+           requestBody: {
+             values: [['']]
+           }
+         });
+         
+         // Also clear the service if it's being explicitly set to empty
+         if (updates.service === '') {
+           // Make sure column P exists
+           if (rows[0].length >= 16) {
+             await sheets.spreadsheets.values.update({
+               spreadsheetId: process.env.SHEET_ID,
+               range: `Reservations!P${rowIndex + 1}`,
+               valueInputOption: 'RAW',
+               requestBody: {
+                 values: [['']]
+               }
+             });
+           }
+         }
+         
+         return res.status(200).json({ 
+           message: 'Table assignment removed successfully',
+           updates: updates
+         });
+       }
+       
+       // Update table if provided
+       if (updates.table) {
+         await sheets.spreadsheets.values.update({
+           spreadsheetId: process.env.SHEET_ID,
+           range: `Reservations!K${rowIndex + 1}`,
+           valueInputOption: 'RAW',
+           requestBody: {
+             values: [[updates.table]]
+           }
+         });
+       }
+       
+       // Update service if provided
+       if (updates.service) {
+         // Ensure column P exists
+         if (rows[0].length < 16) {
+           await sheets.spreadsheets.values.update({
+             spreadsheetId: process.env.SHEET_ID,
+             range: `Reservations!P1`,
+             valueInputOption: 'RAW',
+             requestBody: {
+               values: [['Service']]
+             }
+           });
+         }
+         
+         // Update the service
+         await sheets.spreadsheets.values.update({
+           spreadsheetId: process.env.SHEET_ID,
+           range: `Reservations!P${rowIndex + 1}`,
+           valueInputOption: 'RAW',
+           requestBody: {
+             values: [[updates.service]]
+           }
+         });
+         
+         // If we're assigning a service, make sure the notes reflect this
+         if (updates.notes === undefined && updates.service) {
+           const currentNotes = rows[rowIndex][9] || '';
+           const serviceInfo = updates.service === 'first' ? 
+             '1st Service (12:00-14:00)' : 
+             '2nd Service (14:00-15:30)';
+             
+           // Only add if not already in notes
+           if (!currentNotes.includes(serviceInfo)) {
+             const updatedNotes = currentNotes ? 
+               `${currentNotes}\nTable ${updates.table} assigned for ${serviceInfo}` :
+               `Table ${updates.table} assigned for ${serviceInfo}`;
+               
+             await sheets.spreadsheets.values.update({
+               spreadsheetId: process.env.SHEET_ID,
+               range: `Reservations!J${rowIndex + 1}`,
+               valueInputOption: 'RAW',
+               requestBody: {
+                 values: [[updatedNotes]]
+               }
+             });
+           }
+         }
+       }
+       
+       // Update notes if provided
+       if (updates.notes !== undefined) {
+         await sheets.spreadsheets.values.update({
+           spreadsheetId: process.env.SHEET_ID,
+           range: `Reservations!J${rowIndex + 1}`,
+           valueInputOption: 'RAW',
+           requestBody: {
+             values: [[updates.notes]]
+           }
+         });
+       }
 
-    return res.status(200).json({ 
-      message: 'Reservation updated successfully',
-      updates: updates
-    });
-  }
-
+       return res.status(200).json({ 
+         message: 'Reservation updated successfully',
+         updates: updates
+       });
+     }
 
      // If it's a simple status or table or check-in update
      if (updates.status !== undefined || updates.table !== undefined || updates.checkInStatus !== undefined) {
@@ -222,111 +224,111 @@ export default async function handler(req, res) {
 
          // If status is confirmed, trigger email
          if (updates.status === 'confirmed') {
-          try {
-            // First update the status to "confirming"
-            await sheets.spreadsheets.values.update({
-              spreadsheetId: process.env.SHEET_ID,
-              range: `Reservations!I${rowIndex + 1}`,
-              valueInputOption: 'RAW',
-              requestBody: {
-                values: [['confirming']]
-              }
-            });
-        
-            // Set email queue status
-            await sheets.spreadsheets.values.update({
-              spreadsheetId: process.env.SHEET_ID,
-              range: `Reservations!L${rowIndex + 1}`,
-              valueInputOption: 'RAW',
-              requestBody: {
-                values: [['queued']]
-              }
-            });
-          } catch (error) {
-            console.error('Error queuing email:', error);
-            throw error;
-          }
-        }
+           try {
+             // First update the status to "confirming"
+             await sheets.spreadsheets.values.update({
+               spreadsheetId: process.env.SHEET_ID,
+               range: `Reservations!I${rowIndex + 1}`,
+               valueInputOption: 'RAW',
+               requestBody: {
+                 values: [['confirming']]
+               }
+             });
+         
+             // Set email queue status
+             await sheets.spreadsheets.values.update({
+               spreadsheetId: process.env.SHEET_ID,
+               range: `Reservations!L${rowIndex + 1}`,
+               valueInputOption: 'RAW',
+               requestBody: {
+                 values: [['queued']]
+               }
+             });
+           } catch (error) {
+             console.error('Error queuing email:', error);
+             throw error;
+           }
+         }
 
-        if (updates.status === 'cancelled') {
-          try {
-            // Update status
-            await sheets.spreadsheets.values.update({
-              spreadsheetId: process.env.SHEET_ID,
-              range: `Reservations!I${rowIndex + 1}`,
-              valueInputOption: 'RAW',
-              requestBody: {
-                values: [['cancelled']]
-              }
-            });
-            
-            // Add cancellation reason if provided
-            if (updates.cancellationReason) {
-              // First check if a CancellationReason column exists (column Q or index 16)
-              // If we need to create it:
-              if (rows[0].length < 17) {
-                await sheets.spreadsheets.values.update({
-                  spreadsheetId: process.env.SHEET_ID,
-                  range: `Reservations!Q1`,
-                  valueInputOption: 'RAW',
-                  requestBody: {
-                    values: [['CancellationReason']]
-                  }
-                });
-              }
-              
-              // Update the CancellationReason column
-              await sheets.spreadsheets.values.update({
-                spreadsheetId: process.env.SHEET_ID,
-                range: `Reservations!Q${rowIndex + 1}`,
-                valueInputOption: 'RAW',
-                requestBody: {
-                  values: [[updates.cancellationReason]]
-                }
-              });
-            }
-        
-            // Queue cancellation email - now with the reason included
-            await sheets.spreadsheets.values.update({
-              spreadsheetId: process.env.SHEET_ID,
-              range: `Reservations!L${rowIndex + 1}`,
-              valueInputOption: 'RAW',
-              requestBody: {
-                values: [['queuedCancellation']]
-              }
-            });
-            
-            // Store reservation data in a hidden column for the email
-            if (updates.cancellationReason) {
-              // First, serialize the reason safely
-              const serializedReason = JSON.stringify({ reason: updates.cancellationReason });
-              
-              // Store in a CancellationData column (R)
-              if (rows[0].length < 18) {
-                await sheets.spreadsheets.values.update({
-                  spreadsheetId: process.env.SHEET_ID,
-                  range: `Reservations!R1`,
-                  valueInputOption: 'RAW',
-                  requestBody: {
-                    values: [['CancellationData']]
-                  }
-                });
-              }
-              
-              await sheets.spreadsheets.values.update({
-                spreadsheetId: process.env.SHEET_ID,
-                range: `Reservations!R${rowIndex + 1}`,
-                valueInputOption: 'RAW',
-                requestBody: {
-                  values: [[serializedReason]]
-                }
-              });
-            }
-          } catch (error) {
-            console.error('Error queuing cancellation email:', error);
-            throw error;
-          }
-        }
+         if (updates.status === 'cancelled') {
+           try {
+             // Update status
+             await sheets.spreadsheets.values.update({
+               spreadsheetId: process.env.SHEET_ID,
+               range: `Reservations!I${rowIndex + 1}`,
+               valueInputOption: 'RAW',
+               requestBody: {
+                 values: [['cancelled']]
+               }
+             });
+             
+             // Add cancellation reason if provided
+             if (updates.cancellationReason) {
+               // First check if a CancellationReason column exists (column Q or index 16)
+               // If we need to create it:
+               if (rows[0].length < 17) {
+                 await sheets.spreadsheets.values.update({
+                   spreadsheetId: process.env.SHEET_ID,
+                   range: `Reservations!Q1`,
+                   valueInputOption: 'RAW',
+                   requestBody: {
+                     values: [['CancellationReason']]
+                   }
+                 });
+               }
+               
+               // Update the CancellationReason column
+               await sheets.spreadsheets.values.update({
+                 spreadsheetId: process.env.SHEET_ID,
+                 range: `Reservations!Q${rowIndex + 1}`,
+                 valueInputOption: 'RAW',
+                 requestBody: {
+                   values: [[updates.cancellationReason]]
+                 }
+               });
+             }
+         
+             // Queue cancellation email - now with the reason included
+             await sheets.spreadsheets.values.update({
+               spreadsheetId: process.env.SHEET_ID,
+               range: `Reservations!L${rowIndex + 1}`,
+               valueInputOption: 'RAW',
+               requestBody: {
+                 values: [['queuedCancellation']]
+               }
+             });
+             
+             // Store reservation data in a hidden column for the email
+             if (updates.cancellationReason) {
+               // First, serialize the reason safely
+               const serializedReason = JSON.stringify({ reason: updates.cancellationReason });
+               
+               // Store in a CancellationData column (R)
+               if (rows[0].length < 18) {
+                 await sheets.spreadsheets.values.update({
+                   spreadsheetId: process.env.SHEET_ID,
+                   range: `Reservations!R1`,
+                   valueInputOption: 'RAW',
+                   requestBody: {
+                     values: [['CancellationData']]
+                   }
+                 });
+               }
+               
+               await sheets.spreadsheets.values.update({
+                 spreadsheetId: process.env.SHEET_ID,
+                 range: `Reservations!R${rowIndex + 1}`,
+                 valueInputOption: 'RAW',
+                 requestBody: {
+                   values: [[serializedReason]]
+                 }
+               });
+             }
+           } catch (error) {
+             console.error('Error queuing cancellation email:', error);
+             throw error;
+           }
+         }
        }
 
        // Update table if provided
@@ -390,6 +392,7 @@ export default async function handler(req, res) {
        }
      } else {
        // Full reservation update
+       console.log("Performing full reservation update with data:", updates);
        const currentRow = rows[rowIndex];
        // Ensure the row has enough elements for all fields we want to update
        while (currentRow.length < 15) {
@@ -397,31 +400,40 @@ export default async function handler(req, res) {
        }
        
        const updatedRow = [
-        id,
-        updates.date || currentRow[1],
-        updates.time || currentRow[2],
-        updates.name || currentRow[3],
-        updates.guests ? updates.guests.toString() : currentRow[4],
-        updates.phone || currentRow[5] || '',
-        updates.email || currentRow[6] || '',
-        currentRow[7], // Preserve source
-        updates.status || currentRow[8],
-        updates.notes || currentRow[9] || '',
-        currentRow[10] || '', // Preserve table assignment
-        currentRow[11] || '', // Preserve column L (email queue)
-        currentRow[12] || '', // Preserve column M (email sent)
-        updates.checkInStatus || currentRow[13] || '', // Column N for check-in status
-        updates.checkInTime || currentRow[14] || ''  // Column O for check-in time
+         id, // Keep the original ID
+         updates.date || currentRow[1],
+         updates.time || currentRow[2],
+         updates.name || currentRow[3],
+         updates.guests ? updates.guests.toString() : currentRow[4],
+         updates.phone !== undefined ? updates.phone : currentRow[5] || '',
+         updates.email !== undefined ? updates.email : currentRow[6] || '',
+         currentRow[7], // Preserve source
+         updates.status || currentRow[8],
+         updates.notes !== undefined ? updates.notes : currentRow[9] || '',
+         updates.table !== undefined ? updates.table : currentRow[10] || '', // Handle table assignment
+         currentRow[11] || '', // Preserve column L (email queue)
+         currentRow[12] || '', // Preserve column M (email sent)
+         updates.checkInStatus || currentRow[13] || '', // Column N for check-in status
+         updates.checkInTime || currentRow[14] || ''  // Column O for check-in time
        ];
 
-       await sheets.spreadsheets.values.update({
-         spreadsheetId: process.env.SHEET_ID,
-         range: `Reservations!A${rowIndex + 1}:O${rowIndex + 1}`,
-         valueInputOption: 'RAW',
-         requestBody: {
-           values: [updatedRow]
-         }
-       });
+       console.log("Updating row with data:", updatedRow);
+
+       // Perform the update
+       try {
+         await sheets.spreadsheets.values.update({
+           spreadsheetId: process.env.SHEET_ID,
+           range: `Reservations!A${rowIndex + 1}:O${rowIndex + 1}`,
+           valueInputOption: 'RAW',
+           requestBody: {
+             values: [updatedRow]
+           }
+         });
+         console.log("Sheet update successful");
+       } catch (updateError) {
+         console.error("Error during sheet update:", updateError);
+         throw updateError;
+       }
      }
 
      return res.status(200).json({ 

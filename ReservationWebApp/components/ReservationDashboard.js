@@ -56,7 +56,12 @@ const [cancellationReason, setCancellationReason] = useState('');
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
+      console.log('Refreshing reservation data...');
       await onStatusUpdate();
+      console.log('Reservation data refreshed successfully');
+    } catch (error) {
+      console.error('Error refreshing reservations:', error);
+      alert('Failed to refresh reservations. Please try again.');
     } finally {
       setTimeout(() => setIsRefreshing(false), 500);
     }
@@ -279,42 +284,53 @@ const handleCancellationConfirm = async (reason) => {
     </div>
   );
 
-  const handleEdit = async (updatedData) => {
-    try {
-      const response = await fetch(`/api/reservations/${selectedReservation.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          date: updatedData.date,
-          time: updatedData.time,
-          name: updatedData.name,
-          guests: updatedData.guests,
-          phone: updatedData.phone,
-          email: updatedData.email,
-          notes: updatedData.notes,
-          status: updatedData.status,
-          // Preserve existing values
-          source: selectedReservation.source,
-          table: selectedReservation.table
-        }),
-      });
-  
-      const responseData = await response.json();
-  
-      if (!response.ok) {
-        throw new Error(responseData.error || 'Failed to update reservation');
-      }
-  
-      await onStatusUpdate(); // Refresh the list
-      setShowEditDialog(false);
-    } catch (error) {
-      console.error('Error in handleEdit:', error);
-      alert('Failed to update reservation: ' + error.message);
+const handleEdit = async (updatedData) => {
+  try {
+    console.log('Starting edit operation with data:', updatedData);
+    setIsLoading(true); // Set loading state if available
+    
+    // Make sure we have the ID
+    if (!selectedReservation || !selectedReservation.id) {
+      throw new Error('No reservation selected');
     }
-  };
+    
+    console.log(`Sending PATCH request to /api/reservations/${selectedReservation.id}`);
+    
+    const response = await fetch(`/api/reservations/${selectedReservation.id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(updatedData),
+    });
+  
+    const responseData = await response.json();
+    
+    console.log('Edit response received:', response.status, responseData);
+  
+    if (!response.ok) {
+      throw new Error(responseData.error || 'Failed to update reservation');
+    }
+  
+    console.log('Edit successful, refreshing data...');
+    
+    // Force a refetch of the reservations data
+    await onStatusUpdate(); 
+    
+    // Close the dialog and clear selection
+    setShowEditDialog(false);
+    setSelectedReservation(null);
+    
+    // Optional: Show success message
+    alert('Reservation updated successfully!');
+  } catch (error) {
+    console.error('Error in handleEdit:', error);
+    alert('Failed to update reservation: ' + error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
   
   const handleTableAssign = async (reservationId, tableNumber, updatedNotes, service) => {
     try {

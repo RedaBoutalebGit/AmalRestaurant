@@ -15,7 +15,14 @@ const EditReservationDialog = ({ reservation, onClose, onSave }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await onSave(formData);
+    try {
+      console.log('Submitting edit form with data:', formData);
+      await onSave(formData);
+      // No need to close the dialog here as the parent component will handle it
+    } catch (error) {
+      console.error('Error in EditReservationDialog submit:', error);
+      alert('Failed to save changes: ' + error.message);
+    }
   };
 
   return (
