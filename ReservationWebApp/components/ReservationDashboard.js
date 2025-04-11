@@ -33,6 +33,7 @@ const ReservationDashboard = ({ reservations = [], onStatusUpdate }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [showCancellationDialog, setShowCancellationDialog] = useState(false);
 const [cancellationReason, setCancellationReason] = useState('');
+const [isLoading, setIsLoading] = useState(false);
 
   // Set selectedDate when filterDate changes from elsewhere
   useEffect(() => {
