@@ -116,7 +116,7 @@ const quarterlyData = [
 const SalesForecastDashboard = () => {
   return (
     <div className="p-4 bg-gray-50">
-      <h1 className="text-2xl font-bold mb-6 text-center">Prévisions 2025 avec Événements Supplémentaires</h1>
+      <h1 className="text-2xl font-bold mb-6 text-center">2025 Forecast with Additional Events</h1>
       
       {/* KPI Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -145,17 +145,18 @@ const SalesForecastDashboard = () => {
         </div>
         
         <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">Nombre d'événements</h3>
+          <h3 className="text-sm font-medium text-gray-500">Events</h3>
           <p className="text-xl font-bold">4</p>
           <p className="text-sm text-gray-600">
-            45 000 mad par événement en moyenne
+            45 000 mad / event (mean)
           </p>
         </div>
       </div>
       
       {/* Annual Comparison Chart */}
       <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <h2 className="text-lg font-medium mb-4">Comparaison du chiffre d'affaires annuel</h2>
+        <h2 className="text-lg font-medium mb-4">
+        Comparison of annual Revenues</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <ResponsiveContainer width="100%" height={300}>
@@ -199,7 +200,8 @@ const SalesForecastDashboard = () => {
       
       {/* Monthly Revenue Forecast */}
       <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <h2 className="text-lg font-medium mb-4">Prévision mensuelle 2025 avec événements</h2>
+        <h2 className="text-lg font-medium mb-4">
+        Monthly forecast</h2>
         <ResponsiveContainer width="100%" height={400}>
           <ComposedChart data={comparisonData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -221,7 +223,7 @@ const SalesForecastDashboard = () => {
       {/* Quarterly Performance */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="text-lg font-medium mb-4">Performance trimestrielle</h2>
+          <h2 className="text-lg font-medium mb-4">Quarterly performance</h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={quarterlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -234,7 +236,7 @@ const SalesForecastDashboard = () => {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        
+         {/* 
         <div className="bg-white p-4 rounded-lg shadow">
           <h2 className="text-lg font-medium mb-4">Scénarios prévisionnels 2025</h2>
           <ResponsiveContainer width="100%" height={300}>
@@ -257,7 +259,7 @@ const SalesForecastDashboard = () => {
               <Tooltip formatter={(value) => value.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' mad'} />
             </PieChart>
           </ResponsiveContainer>
-        </div>
+        </div>*/}
       </div>
       
       {/* Events Calendar 
@@ -307,7 +309,7 @@ const SalesForecastDashboard = () => {
       
       {/* Data Table */}
       <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <h2 className="text-lg font-medium mb-4">Prévisions mensuelles détaillées 2025 (avec événements)</h2>
+        <h2 className="text-lg font-medium mb-4">Detailed Monthly Forecast 2025</h2>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
