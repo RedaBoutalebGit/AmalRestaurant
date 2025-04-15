@@ -260,7 +260,7 @@ const SalesForecastDashboard = () => {
         </div>
       </div>
       
-      {/* Events Calendar */}
+      {/* Events Calendar 
       <div className="bg-white p-4 rounded-lg shadow mb-6">
         <h2 className="text-lg font-medium mb-4">Planification des événements spéciaux 2025</h2>
         <div className="overflow-x-auto">
@@ -303,6 +303,7 @@ const SalesForecastDashboard = () => {
           </table>
         </div>
       </div>
+      */}
       
       {/* Data Table */}
       <div className="bg-white p-4 rounded-lg shadow mb-6">
@@ -372,7 +373,7 @@ const SalesForecastDashboard = () => {
         </div>
       </div>
       
-      {/* Impact Analysis */}
+      {/* Impact Analysis 
       <div className="bg-white p-4 rounded-lg shadow mb-6">
         <h2 className="text-lg font-medium mb-4">Analyse d'impact des événements spéciaux</h2>
         <div className="p-4">
@@ -403,7 +404,7 @@ const SalesForecastDashboard = () => {
             </ul>
           </div>
         </div>
-      </div>
+      </div>*/}
     </div>
   );
 };
