@@ -122,7 +122,7 @@ const SalesForecastDashboard = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white p-4 rounded-lg shadow">
           <h3 className="text-sm font-medium text-gray-500">CA 2025 (Avec événements)</h3>
-          <p className="text-xl font-bold">{totalWithEvents.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</p>
+          <p className="text-xl font-bold">{totalWithEvents.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} mad</p>
           <p className="text-sm text-green-600">
             +{withEventsGrowth.toFixed(2)}% vs 2024
           </p>
@@ -130,7 +130,7 @@ const SalesForecastDashboard = () => {
         
         <div className="bg-white p-4 rounded-lg shadow">
           <h3 className="text-sm font-medium text-gray-500">CA 2025 (Sans événements)</h3>
-          <p className="text-xl font-bold">{totalBaseCase.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</p>
+          <p className="text-xl font-bold">{totalBaseCase.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} mad</p>
           <p className="text-sm text-green-600">
             +{baseCaseGrowth.toFixed(2)}% vs 2024
           </p>
@@ -138,7 +138,7 @@ const SalesForecastDashboard = () => {
         
         <div className="bg-white p-4 rounded-lg shadow">
           <h3 className="text-sm font-medium text-gray-500">Impact des événements</h3>
-          <p className="text-xl font-bold">{additionalRevenue.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</p>
+          <p className="text-xl font-bold">{additionalRevenue.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} mad</p>
           <p className="text-sm text-green-600">
             +{((additionalRevenue / totalBaseCase) * 100).toFixed(2)}% de revenu supplémentaire
           </p>
@@ -148,7 +148,7 @@ const SalesForecastDashboard = () => {
           <h3 className="text-sm font-medium text-gray-500">Nombre d'événements</h3>
           <p className="text-xl font-bold">4</p>
           <p className="text-sm text-gray-600">
-            45 000 € par événement en moyenne
+            45 000 mad par événement en moyenne
           </p>
         </div>
       </div>
@@ -163,7 +163,7 @@ const SalesForecastDashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip formatter={(value) => value.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €'} />
+                <Tooltip formatter={(value) => value.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' mad'} />
                 <Bar dataKey="value" name="CA Annuel" fill="#8884d8">
                   {annualComparisonData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -184,13 +184,13 @@ const SalesForecastDashboard = () => {
                   fill="#8884d8"
                   dataKey="value"
                   nameKey="name"
-                  label={({ name, value, percent }) => `${name}: ${(value/1000000).toFixed(2)}M € (${(percent*100).toFixed(1)}%)`}
+                  label={({ name, value, percent }) => `${name}: ${(value/1000000).toFixed(2)}M mad (${(percent*100).toFixed(1)}%)`}
                 >
                   {eventImpactData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => value.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €'} />
+                <Tooltip formatter={(value) => value.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' mad'} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -205,7 +205,7 @@ const SalesForecastDashboard = () => {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="mois" />
             <YAxis />
-            <Tooltip formatter={(value) => value.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €'} />
+            <Tooltip formatter={(value) => value.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' mad'} />
             <Legend />
             <Bar dataKey="revenues2024" name="Revenus 2024" fill="#8884d8" />
             <Bar dataKey="revenuesBase2025" name="Revenus 2025 (Base)" fill="#82ca9d" />
@@ -227,7 +227,7 @@ const SalesForecastDashboard = () => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="quarter" />
               <YAxis />
-              <Tooltip formatter={(value) => value.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €'} />
+              <Tooltip formatter={(value) => value.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' mad'} />
               <Legend />
               <Bar dataKey="revenus2024" name="2024" fill="#8884d8" />
               <Bar dataKey="revenus2025" name="2025" fill="#ff7300" />
@@ -248,13 +248,13 @@ const SalesForecastDashboard = () => {
                 fill="#8884d8"
                 dataKey="value"
                 nameKey="name"
-                label={({ name, value }) => `${name}: ${(value/1000000).toFixed(2)}M €`}
+                label={({ name, value }) => `${name}: ${(value/1000000).toFixed(2)}M mad`}
               >
                 {scenarioData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => value.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €'} />
+              <Tooltip formatter={(value) => value.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' mad'} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -280,7 +280,7 @@ const SalesForecastDashboard = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{event.month}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{event.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{event.date}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{event.revenue.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{event.revenue.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} mad</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                       event.status === "Réalisé" ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
@@ -295,7 +295,7 @@ const SalesForecastDashboard = () => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">4 événements</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"></td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                  {(eventsDetails.reduce((sum, event) => sum + event.revenue, 0)).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €
+                  {(eventsDetails.reduce((sum, event) => sum + event.revenue, 0)).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} mad
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"></td>
               </tr>
@@ -328,10 +328,10 @@ const SalesForecastDashboard = () => {
                   <tr key={index} className={index < 3 ? "bg-white" : (index === 3 ? "bg-blue-50" : (hasSpecialEvent ? "bg-yellow-50" : "bg-white"))}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.mois}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {item.revenuesWithEvents.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €
+                      {item.revenuesWithEvents.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} mad
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {item.revenues2024.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €
+                      {item.revenues2024.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} mad
                     </td>
                     <td className={`px-6 py-4 whitespace-nowrap text-sm ${growthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {growthRate.toFixed(2)}%
@@ -356,10 +356,10 @@ const SalesForecastDashboard = () => {
               <tr className="bg-gray-50 font-medium">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">TOTAL</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                  {totalWithEvents.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €
+                  {totalWithEvents.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} mad
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                  {total2024.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €
+                  {total2024.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} mad
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">
                   +{withEventsGrowth.toFixed(2)}%
@@ -379,7 +379,7 @@ const SalesForecastDashboard = () => {
           <h3 className="font-medium text-lg mb-3">Bénéfices des événements spéciaux</h3>
           <p className="mb-3">L'ajout de 3 événements supplémentaires similaires à celui d'avril permet :</p>
           <ul className="list-disc pl-5 mb-4">
-            <li className="mb-2">Une augmentation du CA annuel de <span className="text-green-600 font-medium">{additionalRevenue.toLocaleString('fr-FR')} € (+{((additionalRevenue / totalBaseCase) * 100).toFixed(2)}%)</span></li>
+            <li className="mb-2">Une augmentation du CA annuel de <span className="text-green-600 font-medium">{additionalRevenue.toLocaleString('fr-FR')} mad (+{((additionalRevenue / totalBaseCase) * 100).toFixed(2)}%)</span></li>
             <li className="mb-2">Une croissance annuelle passant de <span className="font-medium">+{baseCaseGrowth.toFixed(2)}%</span> à <span className="text-green-600 font-medium">+{withEventsGrowth.toFixed(2)}%</span> par rapport à 2024</li>
             <li className="mb-2">Un renforcement significatif des mois habituellement moins performants (juin et septembre)</li>
           </ul>
