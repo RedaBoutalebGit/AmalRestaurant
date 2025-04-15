@@ -9,6 +9,7 @@ const CREDENTIALS = {
   'inventory': 'inventory2025',
   'recipe': 'recipe2025',
   'tips': 'tips2025',
+  'strat' : 'strat2025',
   // Add more page-password pairs as needed
 };
 
